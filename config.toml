@@ -1,0 +1,6 @@
+host = "127.0.0.1"
+port = 8080
+
+[modules.discord]
+client_id = "1471623206942146844"
+client_secret = "pH0cd2Isv2UswQv9BX5GxnEdSdYEdw5T"
