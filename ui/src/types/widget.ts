@@ -42,9 +42,15 @@ interface ButtonConfig {
 	label: string;
 	backgroundColor: string;
 	action: ActionBinding;
+	valueBinding?: ValueBinding;
 }
 
-interface ActionBinding {
+export interface ValueBinding {
+	module: string;
+	event: string;
+	key: string;
+}
+export interface ActionBinding {
 	module: string;
 	action: string;
 	params: Record<string, any>;

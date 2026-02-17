@@ -1,30 +1,44 @@
-import { useState } from "react";
-import viteLogo from "/vite.svg";
-import reactLogo from "./assets/react.svg";
+import { useEffect, useState } from "react";
 import "./App.css";
+import "./components/widgets";
+import WidgetShell from "./components/dashboard/WidgetShell";
+import { useConnectionStore } from "./stores/connection";
 
 function App() {
 	const [count, setCount] = useState(0);
+	const connect = useConnectionStore((state) => state.connect);
+
+	useEffect(() => {
+		connect("ws://localhost:8001");
+	}, [connect]);
 
 	return (
 		<>
-			<div>
-				<a href="https://vite.dev" target="_blank" rel="noopener">
-					<img src={viteLogo} className="logo" alt="Vite logo" />
-				</a>
-				<a href="https://react.dev" target="_blank" rel="noopener">
-					<img src={reactLogo} className="logo react" alt="React logo" />
-				</a>
-			</div>
-			<h1>Vite + React</h1>
-			<div className="card">
-				<button onClick={() => setCount((count) => count + 1)}>
-					count is {count}
-				</button>
-				<p>
-					Edit <code>src/App.tsx</code> and save to test HMR
-				</p>
-			</div>
+			<WidgetShell
+				instance={{
+					id: "widget1",
+					type: "button",
+					position: { col: 0, row: 0 },
+					size: { w: 200, h: 100 },
+					config: {
+						icon: "square",
+						label: "Button",
+						backgroundColor: "black",
+						action: {
+							module: "discord",
+							action: "set_mute",
+							params: {
+								mute: "$toggle",
+							},
+						},
+						valueBinding: {
+							module: "discord",
+							event: "voice_settings_update",
+							key: "mute",
+						},
+					},
+				}}
+			/>
 			<p className="read-the-docs">
 				Click on the Vite and React logos to learn more
 			</p>

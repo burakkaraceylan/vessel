@@ -132,6 +132,7 @@ See `discord/commands.rs` and `discord/events.rs` for the reference implementati
 - Home Assistant module
 - WASM plugin system for community modules
 - Module marketplace
+- Visual node editor for complex action sequences (trigger → condition → action chains)
 
 ## Touch UI Architecture
 

@@ -5,6 +5,18 @@ import type {
 } from "@/types/widget";
 
 const ButtonWidget: WidgetComponent = ({ config, sendAction, state, size }) => {
+	const handleClick = () => {
+		const resolvedParams: Record<string, unknown> = {};
+		for (const [key, value] of Object.entries(config.action.params)) {
+			if (value === "$toggle") {
+				resolvedParams[key] = !state[key];
+			} else {
+				resolvedParams[key] = value;
+			}
+		}
+		sendAction({ ...config.action, params: resolvedParams });
+	};
+
 	return (
 		<button
 			type="button"
@@ -13,8 +25,9 @@ const ButtonWidget: WidgetComponent = ({ config, sendAction, state, size }) => {
 				width: size.width,
 				height: size.height,
 			}}
+			onClick={handleClick}
 		>
-			"Button"
+			{state.mute ? "Unmute" : "Mute"}
 		</button>
 	);
 };
@@ -27,5 +40,5 @@ export const buttonDefinition: WidgetDefinition = {
 	configSchema: [
 		/* ... */
 	],
-	component: ButtonWidget, // ← the React component lives here
+	component: ButtonWidget,
 };
