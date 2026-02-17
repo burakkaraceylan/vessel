@@ -4,7 +4,7 @@ import type {
 	WidgetProps,
 } from "@/types/widget";
 
-const ButtonWidget: WidgetComponent = ({ config, sendAction, state, size }) => {
+const ButtonWidget: WidgetComponent = ({ config, sendAction, state }) => {
 	const handleClick = () => {
 		const resolvedParams: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(config.action.params)) {
@@ -22,8 +22,9 @@ const ButtonWidget: WidgetComponent = ({ config, sendAction, state, size }) => {
 			type="button"
 			style={{
 				backgroundColor: "black",
-				width: size.width,
-				height: size.height,
+				color: "white",
+				width: "100%",
+				height: "100%",
 			}}
 			onClick={handleClick}
 		>

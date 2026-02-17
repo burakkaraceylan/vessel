@@ -1,0 +1,31 @@
+{
+	"id": "discord-dashboard",
+	"name": "Discord Dashboard",
+	"rows": 4,
+	"columns": 8,
+	"widgets": [
+		{
+			"id": "widget1",
+			"type": "button",
+			"size": { "w": 1, "h": 1 },
+			"position": { "col": 0, "row": 0 },
+			"config": {
+				"icon": "square",
+				"label": "Button",
+				"backgroundColor": "black",
+				"action": {
+					"module": "discord",
+					"action": "set_mute",
+					"params": {
+						"mute": "$toggle"
+					}
+				},
+				"valueBinding": {
+					"module": "discord",
+					"event": "voice_settings_update",
+					"key": "mute"
+				}
+			}
+		}
+	]
+}
