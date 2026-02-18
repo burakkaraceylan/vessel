@@ -5,6 +5,8 @@ import type {
 } from "@/types/widget";
 
 const ButtonWidget: WidgetComponent = ({ config, sendAction, state }) => {
+	const isActive = !!state[config.valueBinding?.key || ""];
+
 	const handleClick = () => {
 		const resolvedParams: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(config.action.params)) {
@@ -21,14 +23,31 @@ const ButtonWidget: WidgetComponent = ({ config, sendAction, state }) => {
 		<button
 			type="button"
 			style={{
-				backgroundColor: "black",
-				color: "white",
+				backgroundColor: isActive
+					? config.activeBackgroundColor ||
+						config.backgroundColor ||
+						"var(--bg-widget)"
+					: config.backgroundColor || "var(--bg-widget)",
+				backgroundImage: isActive
+					? config.activeImage
+						? `url(${config.activeImage})`
+						: undefined
+					: config.image
+						? `url(${config.image})`
+						: undefined,
+				backgroundSize: "cover",
+				color: "var(--text-primary)",
+				border: "1px solid var(--border-color)",
+				borderRadius: "var(--widget-radius)",
 				width: "100%",
 				height: "100%",
+				cursor: "pointer",
+				fontSize: "0.875rem",
+				fontWeight: 500,
 			}}
 			onClick={handleClick}
 		>
-			{state.mute ? "Unmute" : "Mute"}
+			{isActive && config.activeLabel ? config.activeLabel : config.label}
 		</button>
 	);
 };

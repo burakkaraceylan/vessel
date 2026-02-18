@@ -11,7 +11,8 @@
 			"position": { "col": 0, "row": 0 },
 			"config": {
 				"icon": "square",
-				"label": "Button",
+				"image": "/packs/hexaza/016-DISCORD_mute-0.jpg",
+				"activeImage": "/packs/hexaza/016-DISCORD_mute-1.jpg",
 				"backgroundColor": "black",
 				"action": {
 					"module": "discord",

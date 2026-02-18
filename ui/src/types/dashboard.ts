@@ -1,3 +1,4 @@
+import type { Theme } from "./theme";
 import type { WidgetInstance } from "./widget";
 
 export interface Dashboard {
@@ -6,4 +7,5 @@ export interface Dashboard {
 	columns: number;
 	rows: number;
 	widgets: WidgetInstance[];
+	theme?: string;
 }

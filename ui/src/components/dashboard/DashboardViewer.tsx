@@ -13,7 +13,7 @@ const DashboardViewer: React.FC = () => {
 				display: "grid",
 				gridTemplateColumns: `repeat(${dashboard.columns}, 1fr)`,
 				gridTemplateRows: `repeat(${dashboard.rows}, 1fr)`,
-				gap: "10px",
+				gap: "var(--gap)",
 				width: "100%",
 				height: "100%",
 			}}
@@ -26,7 +26,11 @@ const DashboardViewer: React.FC = () => {
 						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
 						i
 					}`}
-					className="border border-black"
+					style={{
+							border: "1px solid var(--border-color)",
+							borderRadius: "var(--widget-radius)",
+							backgroundColor: "var(--bg-secondary)",
+						}}
 				/>
 			))}
 
@@ -36,7 +40,8 @@ const DashboardViewer: React.FC = () => {
 					style={{
 						gridColumn: `${widget.position.col + 1} / span ${widget.size.w}`,
 						gridRow: `${widget.position.row + 1} / span ${widget.size.h}`,
-						border: "1px solid #ccc",
+						borderRadius: "var(--widget-radius)",
+						overflow: "hidden",
 					}}
 				>
 					<WidgetShell instance={widget} />

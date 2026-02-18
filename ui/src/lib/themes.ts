@@ -1,0 +1,17 @@
+import type { Theme } from "@/types/theme";
+
+export const defaultDarkTheme: Theme = {
+	name: "Default Dark",
+	variables: {
+		"--bg-primary": "#0a0a0a",
+		"--bg-secondary": "#141414",
+		"--bg-widget": "#1a1a1a",
+		"--border-color": "#2a2a2a",
+		"--text-primary": "#e5e5e5",
+		"--text-secondary": "#737373",
+		"--accent": "#3b82f6",
+		"--accent-hover": "#2563eb",
+		"--widget-radius": "8px",
+		"--gap": "10px",
+	},
+};

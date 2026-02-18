@@ -38,9 +38,14 @@ interface ConfigField {
 type WidgetConfig = ButtonConfig; // Extend this union type as you add more widget types
 
 interface ButtonConfig {
-	icon: string;
-	label: string;
-	backgroundColor: string;
+	icon?: string;
+	label?: string;
+	image?: string;
+	activeIcon?: string;
+	activeImage?: string;
+	activeLabel?: string;
+	backgroundColor?: string;
+	activeBackgroundColor?: string;
 	action: ActionBinding;
 	valueBinding?: ValueBinding;
 }
