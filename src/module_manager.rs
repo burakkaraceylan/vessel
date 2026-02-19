@@ -2,32 +2,30 @@ use crate::module::{Module, ModuleCommand, ModuleContext, ModuleEvent};
 use anyhow::Context;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::mpsc;
+use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 
 pub struct ModuleManager {
     senders: HashMap<&'static str, mpsc::Sender<ModuleCommand>>,
-    modules: HashMap<&'static str, (Arc<dyn Module>, mpsc::Receiver<ModuleCommand>)>,
-    event_rx: Option<mpsc::Receiver<ModuleEvent>>,
-    event_tx: mpsc::Sender<ModuleEvent>,
+    modules: HashMap<&'static str, (Box<dyn Module>, mpsc::Receiver<ModuleCommand>)>,
+    event_tx: broadcast::Sender<ModuleEvent>,
 }
 
 impl ModuleManager {
     pub fn new() -> Self {
-        let (event_tx, event_rx) = mpsc::channel(32);
+        let (event_tx, _) = broadcast::channel(32);
         ModuleManager {
-            event_rx: Some(event_rx),
             event_tx,
             senders: HashMap::new(),
             modules: HashMap::new(),
         }
     }
 
-    pub fn register_module(&mut self, module: impl Module + 'static) {
+    pub fn register_module(&mut self, module: Box<dyn Module>) {
         let (tx, rx) = mpsc::channel(32);
         let name = module.name();
         self.senders.insert(name, tx);
-        self.modules.insert(name, (Arc::new(module), rx));
+        self.modules.insert(name, (module, rx));
     }
 
     pub async fn send_command(
@@ -42,8 +40,8 @@ impl ModuleManager {
         }
     }
 
-    pub fn take_event(&mut self) -> Option<mpsc::Receiver<ModuleEvent>> {
-        self.event_rx.take()
+    pub fn subscribe(&self) -> broadcast::Receiver<ModuleEvent> {
+        self.event_tx.subscribe()
     }
 
     pub async fn route_command(

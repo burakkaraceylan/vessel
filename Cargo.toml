@@ -19,3 +19,6 @@ mpsc = "0.2.6"
 tokio-tungstenite = "0.28"
 futures-util = "0.3.32"
 toml = "1.0.1"
+axum = { version = "0.8.8", features = ["ws"] }
+dashmap = "6.1.0"
+tower-http = "0.6.8"

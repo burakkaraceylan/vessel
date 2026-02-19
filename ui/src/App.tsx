@@ -10,7 +10,7 @@ function App() {
 	const applyTheme = useThemeStore((state) => state.applyTheme);
 
 	useEffect(() => {
-		connect("ws://localhost:8001");
+		connect("ws://localhost:8001/ws");
 	}, [connect]);
 
 	useEffect(() => {

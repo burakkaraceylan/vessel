@@ -1,98 +1,59 @@
-use crate::config;
-use crate::module::ModuleEvent;
+use std::sync::Arc;
+
 use crate::module_manager::ModuleManager;
 use crate::protocol::{IncomingMessage, OutgoingMessage};
-use futures_util::{SinkExt, StreamExt};
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
-use tokio::net::{TcpListener, TcpStream};
-use tokio::sync::mpsc;
-use tokio_tungstenite::accept_async;
-use tokio_tungstenite::tungstenite::Message;
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
+use axum::extract::State;
+use axum::response::IntoResponse;
+use axum::{Router, routing::get};
+use dashmap::DashMap;
+use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
 
-pub struct Vessel {
-    tcp_listener: TcpListener,
-    ws_listener: TcpListener,
+pub struct AppState {
     pub module_manager: ModuleManager,
+    pub assets: Arc<DashMap<String, Vec<u8>>>,
+    pub cancel_token: CancellationToken,
 }
 
-impl Vessel {
-    pub async fn new(config: &config::Config) -> Result<Self, Box<dyn std::error::Error>> {
-        let tcp_listener = TcpListener::bind(format!("{}:8000", config.host)).await?;
-        let ws_listener = TcpListener::bind(format!("{}:8001", config.host)).await?;
-        let module_manager = ModuleManager::new();
-        Ok(Vessel {
-            tcp_listener,
-            ws_listener,
-            module_manager,
-        })
-    }
+pub fn build_router(state: Arc<AppState>) -> Router {
+    Router::new()
+        .route("/ws", get(ws_handler))
+        .route("/api/assets/{key}", get(assets_handler))
+        .with_state(state)
+}
 
-    pub async fn run(mut self, token: CancellationToken) -> Result<(), Box<dyn std::error::Error>> {
-        let mut event_rx = self
-            .module_manager
-            .take_event()
-            .expect("event_rx already taken");
-
-        self.module_manager.run_all(token.clone()).await?;
-
-        loop {
-            tokio::select! {
-                _ = token.cancelled() => {
-                    println!("Vessel is shutting down.");
-                    break;
-                }
-                result = self.tcp_listener.accept() => {
-                    let (socket, addr) = result?;
-                    println!("Companion connected: {:?}", addr);
-
-                    if let Err(e) = handle_connection(
-                        socket,
-                        &self.module_manager,
-                        &mut event_rx,
-                        token.clone(),
-                    ).await {
-                        eprintln!("Connection error: {}", e);
-                    }
-
-                    println!("Companion disconnected, waiting for reconnect...");
-                }
-                result = self.ws_listener.accept() => {
-                    let (socket, addr) = result?;
-                    println!("Web client connected: {:?}", addr);
-                    if let Err(e) = handle_websocket(
-                        socket,
-                        &self.module_manager,
-                        &mut event_rx,
-                        token.clone(),
-                    ).await {
-                        eprintln!("WebSocket error: {}", e);
-                    }
-                    println!("Web client disconnected, waiting for reconnect...");
-                }
-            }
+async fn ws_handler(
+    ws: WebSocketUpgrade,
+    State(state): State<Arc<AppState>>,
+) -> impl axum::response::IntoResponse {
+    ws.on_upgrade(|socket| async move {
+        if let Err(e) = handle_websocket(socket, &state).await {
+            eprintln!("WebSocket error: {}", e);
         }
-        Ok(())
+    })
+}
+
+async fn assets_handler(
+    axum::extract::Path(key): axum::extract::Path<String>,
+    State(state): State<Arc<AppState>>,
+) -> impl axum::response::IntoResponse {
+    match state.assets.get(&key) {
+        Some(data) => (axum::http::StatusCode::OK, data.clone()).into_response(),
+        None => axum::http::StatusCode::NOT_FOUND.into_response(),
     }
 }
 
-async fn handle_websocket(
-    socket: TcpStream,
-    module_manager: &ModuleManager,
-    event_rx: &mut mpsc::Receiver<ModuleEvent>,
-    cancel_token: CancellationToken,
-) -> anyhow::Result<()> {
-    let ws_stream = accept_async(socket).await?;
-    let (mut write, mut read) = ws_stream.split();
-
+async fn handle_websocket(mut socket: WebSocket, state: &Arc<AppState>) -> anyhow::Result<()> {
+    let mut event_rx = state.module_manager.subscribe();
     println!("WebSocket connection established");
     loop {
         tokio::select! {
-            _ = cancel_token.cancelled() => {
+            _ = state.cancel_token.cancelled() => {
                 break;
             }
 
-            msg = read.next() => {
+            msg = socket.recv() => {
                 match msg {
                     Some(Ok(Message::Text(text))) => {
                         for line in text.lines() {
@@ -101,7 +62,7 @@ async fn handle_websocket(
                             }
                             match serde_json::from_str::<IncomingMessage>(line) {
                                 Ok(msg) => {
-                                    if let Err(e) = module_manager.route_command(
+                                    if let Err(e) = state.module_manager.route_command(
                                         &msg.module, msg.action, msg.params,
                                     ).await {
                                         eprintln!("Route error: {}", e);
@@ -118,74 +79,19 @@ async fn handle_websocket(
                         eprintln!("WebSocket read error: {}", e);
                         break;
                     }
-                    _ => {} // ping/pong/binary - ignore
+                    _ => {}
                 }
             }
 
             event = event_rx.recv() => {
                 match event {
-                    Some(event) => {
+                    Ok(event) => {
                         let msg = OutgoingMessage::from(event);
                         let json = serde_json::to_string(&msg)?;
-                        write.send(Message::Text(json.into())).await?;
+                        socket.send(Message::Text(json.into())).await?;
                     }
-                    None => break,
-                }
-            }
-        }
-    }
-
-    Ok(())
-}
-
-async fn handle_connection(
-    socket: TcpStream,
-    module_manager: &ModuleManager,
-    event_rx: &mut mpsc::Receiver<ModuleEvent>,
-    cancel_token: CancellationToken,
-) -> anyhow::Result<()> {
-    let (reader, mut writer) = socket.into_split();
-    let mut lines = BufReader::new(reader).lines();
-
-    loop {
-        tokio::select! {
-            _ = cancel_token.cancelled() => {
-                break;
-            }
-
-            line = lines.next_line() => {
-                match line {
-                    Ok(Some(line)) => {
-                        match serde_json::from_str::<IncomingMessage>(&line) {
-                            Ok(msg) => {
-                                if let Err(e) = module_manager.route_command(
-                                    &msg.module, msg.action, msg.params,
-                                ).await {
-                                    eprintln!("Route error: {}", e);
-                                }
-                            }
-                            Err(e) => {
-                                eprintln!("Invalid JSON: {}", e);
-                            }
-                        }
-                    }
-                    Ok(None) => break,
-                    Err(e) => {
-                        eprintln!("Read error: {}", e);
-                        break;
-                    }
-                }
-            }
-
-            event = event_rx.recv() => {
-                match event {
-                    Some(event) => {
-                        let msg = OutgoingMessage::from(event);
-                        let mut json = serde_json::to_string(&msg)?;
-                        json.push('\n');
-                        writer.write_all(json.as_bytes()).await?;
-                    }
-                    None => break,
+                    Err(broadcast::error::RecvError::Closed) => break,
+                    Err(broadcast::error::RecvError::Lagged(_)) => continue,
                 }
             }
         }

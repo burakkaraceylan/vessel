@@ -1,5 +1,5 @@
 use async_trait::async_trait;
-use tokio::sync::mpsc;
+use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 
 #[async_trait]
@@ -14,14 +14,14 @@ pub trait Module: Send + Sync {
 pub struct ModuleContext {
     pub cancel_token: CancellationToken,
     pub rx: mpsc::Receiver<ModuleCommand>,
-    pub event_tx: mpsc::Sender<ModuleEvent>,
+    pub event_tx: broadcast::Sender<ModuleEvent>,
 }
 
 impl ModuleContext {
     pub fn new(
         cancel_token: CancellationToken,
         rx: mpsc::Receiver<ModuleCommand>,
-        event_tx: mpsc::Sender<ModuleEvent>,
+        event_tx: broadcast::Sender<ModuleEvent>,
     ) -> Self {
         ModuleContext {
             cancel_token,
@@ -48,6 +48,7 @@ pub trait IntoModuleEvent {
     fn into_event(self) -> ModuleEvent;
 }
 
+#[derive(Clone)]
 pub struct ModuleEvent {
     pub source: &'static str,
     pub event: String,

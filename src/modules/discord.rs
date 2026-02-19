@@ -148,7 +148,7 @@ impl Module for DiscordModule {
                                             }
                                         }
                                     }
-                                    let _ = ctx.event_tx.send(event).await;
+                                    let _ = ctx.event_tx.send(event);
                                 }
                                 Err(e) => {
                                     warn!("Discord command '{}' failed: {}", cmd.action, e);
@@ -174,7 +174,7 @@ impl Module for DiscordModule {
                                             source: "discord",
                                             event: "speaking".to_string(),
                                             data: serde_json::json!({ "active": active }),
-                                        }).await;
+                                        });
                                     }
                                 }
                                 "speaking_stop" => {
@@ -186,11 +186,11 @@ impl Module for DiscordModule {
                                             source: "discord",
                                             event: "speaking".to_string(),
                                             data: serde_json::json!({ "active": active }),
-                                        }).await;
+                                        });
                                     }
                                 }
                                 _ => {
-                                    let _ = ctx.event_tx.send(event).await;
+                                    let _ = ctx.event_tx.send(event);
                                 }
                             }
                         }
