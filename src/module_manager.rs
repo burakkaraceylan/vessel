@@ -1,5 +1,6 @@
 use crate::module::{Module, ModuleCommand, ModuleContext, ModuleEvent};
 use anyhow::Context;
+use dashmap::DashMap;
 use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc};
@@ -9,6 +10,7 @@ pub struct ModuleManager {
     senders: HashMap<&'static str, mpsc::Sender<ModuleCommand>>,
     modules: HashMap<&'static str, (Box<dyn Module>, mpsc::Receiver<ModuleCommand>)>,
     event_tx: broadcast::Sender<ModuleEvent>,
+    pub assets: Arc<DashMap<String, (Vec<u8>, String)>>,
 }
 
 impl ModuleManager {
@@ -18,6 +20,7 @@ impl ModuleManager {
             event_tx,
             senders: HashMap::new(),
             modules: HashMap::new(),
+            assets: Arc::new(DashMap::new()),
         }
     }
 
@@ -61,7 +64,7 @@ impl ModuleManager {
 
     pub async fn run_all(&mut self, cancel_token: CancellationToken) -> anyhow::Result<()> {
         for (_, (module, rx)) in self.modules.drain() {
-            let ctx = ModuleContext::new(cancel_token.clone(), rx, self.event_tx.clone());
+            let ctx = ModuleContext::new(cancel_token.clone(), rx, self.event_tx.clone(), self.assets.clone());
             tokio::spawn(async move {
                 if let Err(e) = module.run(ctx).await {
                     eprintln!("Module error: {}", e);

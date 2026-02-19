@@ -9,10 +9,9 @@ use std::sync::Arc;
 
 use crate::module::Module;
 use crate::module_manager::ModuleManager;
-use crate::modules::discord;
+use crate::modules::{discord, media};
 use crate::vessel::{AppState, build_router};
 use anyhow::Context;
-use dashmap::DashMap;
 use tokio_util::sync::CancellationToken;
 
 #[tokio::main]
@@ -28,11 +27,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         .to_owned();
     let discord_module = discord::DiscordModule::new(discord_config).await?;
     module_manager.register_module(Box::new(discord_module));
+
+    let media_module = media::MediaModule::new(toml::Table::new()).await?;
+    module_manager.register_module(Box::new(media_module));
+
     module_manager.run_all(token.clone()).await?;
 
+    let assets = module_manager.assets.clone();
     let state = Arc::new(AppState {
         module_manager,
-        assets: Arc::new(DashMap::new()),
+        assets,
         cancel_token: token.clone(),
     });
 

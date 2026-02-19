@@ -12,7 +12,7 @@ use tokio_util::sync::CancellationToken;
 
 pub struct AppState {
     pub module_manager: ModuleManager,
-    pub assets: Arc<DashMap<String, Vec<u8>>>,
+    pub assets: Arc<DashMap<String, (Vec<u8>, String)>>,
     pub cancel_token: CancellationToken,
 }
 
@@ -39,7 +39,15 @@ async fn assets_handler(
     State(state): State<Arc<AppState>>,
 ) -> impl axum::response::IntoResponse {
     match state.assets.get(&key) {
-        Some(data) => (axum::http::StatusCode::OK, data.clone()).into_response(),
+        Some(entry) => {
+            let (data, content_type) = entry.value();
+            (
+                axum::http::StatusCode::OK,
+                [(axum::http::header::CONTENT_TYPE, content_type.clone())],
+                data.clone(),
+            )
+                .into_response()
+        }
         None => axum::http::StatusCode::NOT_FOUND.into_response(),
     }
 }

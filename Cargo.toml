@@ -22,3 +22,7 @@ toml = "1.0.1"
 axum = { version = "0.8.8", features = ["ws"] }
 dashmap = "6.1.0"
 tower-http = "0.6.8"
+
+[dependencies.windows]
+version = "0.62.2"
+features = ["Media_Control", "Storage_Streams", "Foundation"]

@@ -1,4 +1,6 @@
 use async_trait::async_trait;
+use dashmap::DashMap;
+use std::sync::Arc;
 use tokio::sync::{broadcast, mpsc};
 use tokio_util::sync::CancellationToken;
 
@@ -15,6 +17,7 @@ pub struct ModuleContext {
     pub cancel_token: CancellationToken,
     pub rx: mpsc::Receiver<ModuleCommand>,
     pub event_tx: broadcast::Sender<ModuleEvent>,
+    pub assets: Arc<DashMap<String, (Vec<u8>, String)>>,
 }
 
 impl ModuleContext {
@@ -22,11 +25,13 @@ impl ModuleContext {
         cancel_token: CancellationToken,
         rx: mpsc::Receiver<ModuleCommand>,
         event_tx: broadcast::Sender<ModuleEvent>,
+        assets: Arc<DashMap<String, (Vec<u8>, String)>>,
     ) -> Self {
         ModuleContext {
             cancel_token,
             rx,
             event_tx,
+            assets,
         }
     }
 }
