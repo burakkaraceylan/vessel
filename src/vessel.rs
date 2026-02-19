@@ -70,6 +70,7 @@ async fn handle_websocket(mut socket: WebSocket, state: &Arc<AppState>) -> anyho
                             }
                             match serde_json::from_str::<IncomingMessage>(line) {
                                 Ok(msg) => {
+                                    println!("Received command: module='{}', action='{}'", msg.module, msg.action);
                                     if let Err(e) = state.module_manager.route_command(
                                         &msg.module, msg.action, msg.params,
                                     ).await {

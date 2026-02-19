@@ -27,6 +27,64 @@
 					"key": "mute"
 				}
 			}
+		},
+		{
+			"id": "widget-media-cover",
+			"type": "image",
+			"size": { "w": 3, "h": 3 },
+			"position": { "col": 5, "row": 1 },
+			"config": {
+				"image": "${media.track_changed.cover_art_url}",
+				"label": "${media.track_changed.title}",
+				"labelPosition": "b",
+				"backgroundColor": "black",
+				"borderColor": "var(--border-color)"
+			}
+		},
+		{
+			"id": "media-previous",
+			"type": "button",
+			"size": { "w": 1, "h": 1 },
+			"position": { "col": 5, "row": 0 },
+			"config": {
+				"backgroundColor": "black",
+				"image": "/packs/hexaza/005-MULTIMEDIA_0_prev-track.jpg",
+				"borderColor": "var(--border-color)",
+				"action": {
+					"module": "media",
+					"action": "previous"
+				}
+			}
+		},
+		{
+			"id": "media-play-pause",
+			"type": "button",
+			"size": { "w": 1, "h": 1 },
+			"position": { "col": 6, "row": 0 },
+			"config": {
+				"backgroundColor": "black",
+				"image": "/packs/hexaza/005-MULTIMEDIA_0_play-pause.jpg",
+				"borderColor": "var(--border-color)",
+				"action": {
+					"module": "media",
+					"action": "toggle_play_pause"
+				}
+			}
+		},
+				{
+			"id": "media-next",
+			"type": "button",
+			"size": { "w": 1, "h": 1 },
+			"position": { "col": 7, "row": 0 },
+			"config": {
+				"backgroundColor": "black",
+				"image": "/packs/hexaza/005-MULTIMEDIA_0_next-track.jpg",
+				"borderColor": "var(--border-color)",
+				"action": {
+					"module": "media",
+					"action": "next"
+				}
+			}
 		}
 	]
 }

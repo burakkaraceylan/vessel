@@ -1,5 +1,6 @@
 import { registry } from "@/lib/registry";
 import { buttonDefinition } from "./ButtonWidget";
+import { imageDefinition } from "./ImageWidget";
 
 registry.registerWidget("button", buttonDefinition);
-console.log(registry);
+registry.registerWidget("image", imageDefinition);

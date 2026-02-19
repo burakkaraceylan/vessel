@@ -53,6 +53,7 @@ async fn handle_command(cmd: crate::module::ModuleCommand, smtc: &SmtcModule) {
     let smtc_cmd = match media_cmd {
         MediaCommand::Play => SmtcCommand::Play,
         MediaCommand::Pause => SmtcCommand::Pause,
+        MediaCommand::TogglePlayPause => SmtcCommand::TogglePlayPause,
         MediaCommand::Stop => SmtcCommand::Stop,
         MediaCommand::Next => SmtcCommand::Next,
         MediaCommand::Previous => SmtcCommand::Previous,

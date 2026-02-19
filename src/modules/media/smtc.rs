@@ -39,6 +39,7 @@ pub enum SmtcOutbound {
 pub enum SmtcCommand {
     Play,
     Pause,
+    TogglePlayPause,
     Stop,
     Next,
     Previous,
@@ -268,14 +269,17 @@ impl SmtcInner {
 
         let cover_art_key = if let Some((bytes, content_type)) = try_read_cover_art(&props).await {
             const KEY: &str = "media_cover_art";
-            let ts = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)
-                .unwrap_or_default()
-                .as_millis();
+            // Hash the bytes so the URL only changes when the cover art actually changes.
+            // Same song playing/pausing reuses the same URL → browser cache hit.
+            let hash = {
+                use std::hash::{Hash, Hasher};
+                use std::collections::hash_map::DefaultHasher;
+                let mut h = DefaultHasher::new();
+                bytes.hash(&mut h);
+                h.finish()
+            };
             self.assets.insert(KEY.to_string(), (bytes, content_type));
-            // Append timestamp as a cache-busting query param; the path extractor
-            // in the handler sees only the key, so the map entry stays stable.
-            Some(format!("{KEY}?t={ts}"))
+            Some(format!("{KEY}?v={hash}"))
         } else {
             None
         };
@@ -297,6 +301,17 @@ impl SmtcInner {
             match cmd {
                 SmtcCommand::Play     => { session.TryPlayAsync()?.await?; }
                 SmtcCommand::Pause    => { session.TryPauseAsync()?.await?; }
+                SmtcCommand::TogglePlayPause => {
+                    let is_playing = session.GetPlaybackInfo()
+                        .and_then(|i| i.PlaybackStatus())
+                        .map(|s| s == PlaybackStatus::Playing)
+                        .unwrap_or(false);
+                    if is_playing {
+                        session.TryPauseAsync()?.await?;
+                    } else {
+                        session.TryPlayAsync()?.await?;
+                    }
+                }
                 SmtcCommand::Stop     => { session.TryStopAsync()?.await?; }
                 SmtcCommand::Next     => { session.TrySkipNextAsync()?.await?; }
                 SmtcCommand::Previous => { session.TrySkipPreviousAsync()?.await?; }

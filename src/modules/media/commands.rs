@@ -5,6 +5,7 @@ use serde_json::Value;
 pub enum MediaCommand {
     Play,
     Pause,
+    TogglePlayPause,
     Stop,
     Next,
     Previous,
@@ -17,6 +18,7 @@ impl FromModuleCommand for MediaCommand {
         match action {
             "play" => Ok(MediaCommand::Play),
             "pause" => Ok(MediaCommand::Pause),
+            "toggle_play_pause" => Ok(MediaCommand::TogglePlayPause),
             "stop" => Ok(MediaCommand::Stop),
             "next" => Ok(MediaCommand::Next),
             "previous" => Ok(MediaCommand::Previous),

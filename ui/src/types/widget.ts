@@ -1,6 +1,6 @@
 /** biome-ignore-all lint/suspicious/noExplicitAny: <explanation> */
 
-export type WidgetComponent = React.FC<WidgetProps>;
+export type WidgetComponent = React.FC<WidgetProps<any>>;
 
 export interface WidgetInstance {
 	id: string;
@@ -35,9 +35,9 @@ interface ConfigField {
 	options?: { label: string; value: string }[]; // for "select"
 }
 
-type WidgetConfig = ButtonConfig; // Extend this union type as you add more widget types
+export type WidgetConfig = ButtonConfig | ImageConfig; // Extend this union type as you add more widget types
 
-interface ButtonConfig {
+export interface ButtonConfig {
 	icon?: string;
 	label?: string;
 	image?: string;
@@ -45,6 +45,14 @@ interface ButtonConfig {
 	borderColor?: string;
 	action: ActionBinding;
 	valueBinding?: ValueBinding;
+}
+
+export interface ImageConfig {
+	image?: string;
+	backgroundColor?: string;
+	borderColor?: string;
+	label?: string;
+	labelPosition?: "t" | "b" | "l" | "r" | "c" | "tl" | "tr" | "bl" | "br";
 }
 
 export interface ValueBinding {
@@ -58,8 +66,8 @@ export interface ActionBinding {
 	params: Record<string, any>;
 }
 
-export interface WidgetProps {
-	config: WidgetConfig;
+export interface WidgetProps<T extends WidgetConfig = WidgetConfig> {
+	config: T;
 	state: Record<string, unknown>;
 	sendAction: (action: ActionBinding) => void;
 	size: {

@@ -46,7 +46,9 @@ export const useConnectionStore = create<ConnectionState>((set, get) => ({
 	sendAction: (action: ActionBinding) => {
 		const ws = get().ws;
 		if (ws && ws.readyState === WebSocket.OPEN) {
-			ws.send(JSON.stringify(action));
+			const message = JSON.stringify(action);
+			console.log("Sending action:", message);
+			ws.send(message);
 		} else {
 			console.warn("WebSocket is not connected. Cannot send action.");
 		}

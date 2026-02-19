@@ -10,7 +10,6 @@ const WidgetShell: React.FC<{ instance: WidgetInstance }> = ({ instance }) => {
 	const sendAction = useConnectionStore((state) => state.sendAction);
 	const moduleState = useModuleStateStore((state) => state.state);
 	const [state, setState] = useState<Record<string, unknown>>({});
-
 	const resolve = (value: string) => resolveValue(value, moduleState);
 
 	useEffect(() => {
