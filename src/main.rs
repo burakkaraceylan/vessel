@@ -44,7 +44,10 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     });
 
     let listener = tokio::net::TcpListener::bind(format!("{}:8001", config.host)).await?;
-    axum::serve(listener, build_router(state)).await?;
+    axum::serve(listener, build_router(state))
+        .with_graceful_shutdown(token.cancelled_owned())
+        .await?;
+
 
     Ok(())
 }
