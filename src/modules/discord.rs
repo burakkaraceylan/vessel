@@ -14,11 +14,13 @@ use anyhow::{Context, Result, anyhow};
 use async_trait::async_trait;
 use commands::DiscordCommand;
 use events::DiscordEvent;
+use std::collections::HashSet;
 use tokio::sync::Mutex;
 use tracing::{info, warn};
 
 pub struct DiscordModule {
     pub voice_controller: Mutex<voice::DiscordVoiceController>,
+    speaking_users: Mutex<HashSet<String>>,
     client_id: String,
     client_secret: String,
 }
@@ -88,6 +90,7 @@ impl Module for DiscordModule {
                 .context("Failed to connect and authenticate with Discord voice controller")?;
         Ok(DiscordModule {
             voice_controller: Mutex::new(voice_controller),
+            speaking_users: Mutex::new(HashSet::new()),
             client_id: client_id.to_owned(),
             client_secret: client_secret.to_owned(),
         })
@@ -104,6 +107,27 @@ impl Module for DiscordModule {
             .subscribe_voice_settings()
             .await?;
 
+        // If we're already in a channel when the module starts, subscribe to speaking now.
+        let maybe_channel = self
+            .voice_controller
+            .lock()
+            .await
+            .get_selected_voice_channel()
+            .await;
+        if let Ok(Some(channel)) = maybe_channel {
+            if let Some(channel_id) = channel["id"].as_str().map(|s| s.to_string()) {
+                if let Err(e) = self
+                    .voice_controller
+                    .lock()
+                    .await
+                    .subscribe_speaking(&channel_id)
+                    .await
+                {
+                    warn!("Failed to subscribe to speaking for channel {}: {}", channel_id, e);
+                }
+            }
+        }
+
         loop {
             tokio::select! {
                 _ = ctx.cancel_token.cancelled() => {
@@ -116,6 +140,14 @@ impl Module for DiscordModule {
                         Ok(discord_cmd) => {
                             match self.handle_command(discord_cmd).await {
                                 Ok(event) => {
+                                    // When joining a channel, subscribe to speaking events.
+                                    if event.event == "voice_channel_joined" {
+                                        if let Some(channel_id) = event.data["id"].as_str().map(|s| s.to_string()) {
+                                            if let Err(e) = self.voice_controller.lock().await.subscribe_speaking(&channel_id).await {
+                                                warn!("Failed to subscribe to speaking: {}", e);
+                                            }
+                                        }
+                                    }
                                     let _ = ctx.event_tx.send(event).await;
                                 }
                                 Err(e) => {
@@ -132,7 +164,35 @@ impl Module for DiscordModule {
                 result = async { self.voice_controller.lock().await.recv_event().await } => {
                     match result {
                         Ok(event) => {
-                            let _ = ctx.event_tx.send(event).await;
+                            match event.event.as_str() {
+                                "speaking_start" => {
+                                    if let Some(user_id) = event.data["user_id"].as_str() {
+                                        let mut users = self.speaking_users.lock().await;
+                                        users.insert(user_id.to_string());
+                                        let active = !users.is_empty();
+                                        let _ = ctx.event_tx.send(ModuleEvent {
+                                            source: "discord",
+                                            event: "speaking".to_string(),
+                                            data: serde_json::json!({ "active": active }),
+                                        }).await;
+                                    }
+                                }
+                                "speaking_stop" => {
+                                    if let Some(user_id) = event.data["user_id"].as_str() {
+                                        let mut users = self.speaking_users.lock().await;
+                                        users.remove(user_id);
+                                        let active = !users.is_empty();
+                                        let _ = ctx.event_tx.send(ModuleEvent {
+                                            source: "discord",
+                                            event: "speaking".to_string(),
+                                            data: serde_json::json!({ "active": active }),
+                                        }).await;
+                                    }
+                                }
+                                _ => {
+                                    let _ = ctx.event_tx.send(event).await;
+                                }
+                            }
                         }
                         Err(e) => {
                             warn!("Discord event recv error: {}", e);

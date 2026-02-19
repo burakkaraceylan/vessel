@@ -11,9 +11,9 @@
 			"position": { "col": 0, "row": 0 },
 			"config": {
 				"icon": "square",
-				"image": "/packs/hexaza/016-DISCORD_mute-0.jpg",
-				"activeImage": "/packs/hexaza/016-DISCORD_mute-1.jpg",
+				"image": "${if discord.voice_settings_update.mute then \"/packs/hexaza/016-DISCORD_mute-1.jpg\" else \"/packs/hexaza/016-DISCORD_mute-0.jpg\"}",
 				"backgroundColor": "black",
+				"borderColor": "${if discord.speaking.active then \"#43b581\" else \"var(--border-color)\"}",
 				"action": {
 					"module": "discord",
 					"action": "set_mute",

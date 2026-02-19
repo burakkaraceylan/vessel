@@ -7,6 +7,8 @@ pub enum DiscordEvent {
     SelectedVoiceChannel(Option<Value>),
     VoiceChannelJoined(Value),
     VoiceChannelLeft,
+    SpeakingStart { user_id: String },
+    SpeakingStop { user_id: String },
 }
 
 impl IntoModuleEvent for DiscordEvent {
@@ -31,6 +33,16 @@ impl IntoModuleEvent for DiscordEvent {
                 source: "discord",
                 event: "voice_channel_left".to_string(),
                 data: Value::Null,
+            },
+            DiscordEvent::SpeakingStart { user_id } => ModuleEvent {
+                source: "discord",
+                event: "speaking_start".to_string(),
+                data: serde_json::json!({ "user_id": user_id }),
+            },
+            DiscordEvent::SpeakingStop { user_id } => ModuleEvent {
+                source: "discord",
+                event: "speaking_stop".to_string(),
+                data: serde_json::json!({ "user_id": user_id }),
             },
         }
     }

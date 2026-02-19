@@ -4,14 +4,12 @@ import type {
 	WidgetProps,
 } from "@/types/widget";
 
-const ButtonWidget: WidgetComponent = ({ config, sendAction, state }) => {
-	const isActive = !!state[config.valueBinding?.key || ""];
-
+const ButtonWidget: WidgetComponent = ({ config, sendAction, state, resolve }) => {
 	const handleClick = () => {
 		const resolvedParams: Record<string, unknown> = {};
 		for (const [key, value] of Object.entries(config.action.params)) {
 			if (value === "$toggle") {
-				resolvedParams[key] = !state[key];
+				resolvedParams[key] = !state[config.valueBinding?.key ?? key];
 			} else {
 				resolvedParams[key] = value;
 			}
@@ -19,25 +17,20 @@ const ButtonWidget: WidgetComponent = ({ config, sendAction, state }) => {
 		sendAction({ ...config.action, params: resolvedParams });
 	};
 
+	const bg = resolve(config.backgroundColor ?? "var(--bg-widget)");
+	const border = resolve(config.borderColor ?? "var(--border-color)");
+	const image = config.image ? resolve(config.image) : undefined;
+	const label = resolve(config.label ?? "");
+
 	return (
 		<button
 			type="button"
 			style={{
-				backgroundColor: isActive
-					? config.activeBackgroundColor ||
-						config.backgroundColor ||
-						"var(--bg-widget)"
-					: config.backgroundColor || "var(--bg-widget)",
-				backgroundImage: isActive
-					? config.activeImage
-						? `url(${config.activeImage})`
-						: undefined
-					: config.image
-						? `url(${config.image})`
-						: undefined,
+				backgroundColor: bg,
+				backgroundImage: image ? `url(${image})` : undefined,
 				backgroundSize: "cover",
 				color: "var(--text-primary)",
-				border: "1px solid var(--border-color)",
+				border: `1px solid ${border}`,
 				borderRadius: "var(--widget-radius)",
 				width: "100%",
 				height: "100%",
@@ -47,7 +40,7 @@ const ButtonWidget: WidgetComponent = ({ config, sendAction, state }) => {
 			}}
 			onClick={handleClick}
 		>
-			{isActive && config.activeLabel ? config.activeLabel : config.label}
+			{label}
 		</button>
 	);
 };

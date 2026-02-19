@@ -10,12 +10,21 @@ const DashboardViewer: React.FC = () => {
 	return (
 		<div
 			style={{
+				width: "100%",
+				height: "100%",
+				display: "flex",
+				alignItems: "center",
+				justifyContent: "center",
+			}}
+		>
+		<div
+			style={{
 				display: "grid",
 				gridTemplateColumns: `repeat(${dashboard.columns}, 1fr)`,
 				gridTemplateRows: `repeat(${dashboard.rows}, 1fr)`,
 				gap: "var(--gap)",
-				width: "100%",
-				height: "100%",
+				aspectRatio: `${dashboard.columns} / ${dashboard.rows}`,
+				width: `min(100%, calc(100vh * ${dashboard.columns} / ${dashboard.rows}))`,
 			}}
 		>
 			{Array.from({
@@ -23,7 +32,7 @@ const DashboardViewer: React.FC = () => {
 			}).map((_, i) => (
 				<div
 					key={`cell-${
-						// biome-ignore lint/suspicious/noArrayIndexKey: <explanation>
+						// biome-ignore lint/suspicious/noArrayIndexKey: background cells have no stable identity
 						i
 					}`}
 					style={{
@@ -47,6 +56,7 @@ const DashboardViewer: React.FC = () => {
 					<WidgetShell instance={widget} />
 				</div>
 			))}
+		</div>
 		</div>
 	);
 };

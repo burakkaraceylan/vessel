@@ -354,6 +354,20 @@ impl DiscordVoiceController {
                     .context("Failed to parse VOICE_SETTINGS_UPDATE data")?;
                 Ok(DiscordEvent::VoiceSettingsUpdate(settings).into_event())
             }
+            "SPEAKING_START" => {
+                let user_id = data["data"]["user_id"]
+                    .as_str()
+                    .context("missing user_id in SPEAKING_START")?
+                    .to_string();
+                Ok(DiscordEvent::SpeakingStart { user_id }.into_event())
+            }
+            "SPEAKING_STOP" => {
+                let user_id = data["data"]["user_id"]
+                    .as_str()
+                    .context("missing user_id in SPEAKING_STOP")?
+                    .to_string();
+                Ok(DiscordEvent::SpeakingStop { user_id }.into_event())
+            }
             other => Err(anyhow!("unknown discord event: {}", other)),
         }
     }

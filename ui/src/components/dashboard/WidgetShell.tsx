@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { resolveValue } from "@/lib/expressions";
 import { useConnectionStore } from "@/stores/connection";
 import { useModuleStateStore } from "@/stores/moduleState";
 import { registry } from "../../lib/registry";
@@ -9,6 +10,8 @@ const WidgetShell: React.FC<{ instance: WidgetInstance }> = ({ instance }) => {
 	const sendAction = useConnectionStore((state) => state.sendAction);
 	const moduleState = useModuleStateStore((state) => state.state);
 	const [state, setState] = useState<Record<string, unknown>>({});
+
+	const resolve = (value: string) => resolveValue(value, moduleState);
 
 	useEffect(() => {
 		const state: Record<string, unknown> = {};
@@ -33,6 +36,7 @@ const WidgetShell: React.FC<{ instance: WidgetInstance }> = ({ instance }) => {
 			state={state}
 			sendAction={sendAction}
 			size={{ width: instance.size.w, height: instance.size.h }}
+			resolve={resolve}
 		/>
 	);
 };

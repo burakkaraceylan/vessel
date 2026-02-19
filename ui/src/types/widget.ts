@@ -41,11 +41,8 @@ interface ButtonConfig {
 	icon?: string;
 	label?: string;
 	image?: string;
-	activeIcon?: string;
-	activeImage?: string;
-	activeLabel?: string;
 	backgroundColor?: string;
-	activeBackgroundColor?: string;
+	borderColor?: string;
 	action: ActionBinding;
 	valueBinding?: ValueBinding;
 }
@@ -69,4 +66,5 @@ export interface WidgetProps {
 		width: number;
 		height: number;
 	};
+	resolve: (value: string) => string;
 }

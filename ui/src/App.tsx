@@ -19,11 +19,10 @@ function App() {
 
 	return (
 		<div
-			className="h-screen w-screen"
+			className="h-full w-full"
 			style={{
 				backgroundColor: "var(--bg-primary)",
 				color: "var(--text-primary)",
-				padding: "var(--gap)",
 			}}
 		>
 			<DashboardViewer />
