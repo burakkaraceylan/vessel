@@ -15,12 +15,9 @@ export function resolveValue(
 	if (!match) return value;
 
 	try {
-		console.log(moduleState);
 		const result = compileExpression(match[1], OPTIONS)(moduleState);
-		console.log("Expression result:", result);
 		return String(result);
 	} catch (e) {
-		console.error("Expression failed:", match[1], e);
 		return value;
 	}
 }

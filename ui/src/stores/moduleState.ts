@@ -13,6 +13,7 @@ interface ModuleStateStore {
 export const useModuleStateStore = create<ModuleStateStore>((set) => ({
 	state: {},
 	handleEvent: (module, event, data) => {
+		console.log(`Handling event for module ${module}:`, event, data);
 		set((prev) => ({
 			state: {
 				...prev.state,
