@@ -25,4 +25,11 @@ tower-http = "0.6.8"
 
 [dependencies.windows]
 version = "0.62.2"
-features = ["Media_Control", "Storage_Streams", "Foundation"]
+features = [
+    "Media_Control",
+    "Storage_Streams",
+    "Foundation",
+    "Win32_Foundation",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_System_Threading",
+]

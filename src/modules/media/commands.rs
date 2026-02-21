@@ -1,5 +1,5 @@
 use crate::module::FromModuleCommand;
-use anyhow::{anyhow, Result};
+use anyhow::{Result, anyhow};
 use serde_json::Value;
 
 pub enum MediaCommand {
@@ -33,4 +33,3 @@ impl FromModuleCommand for MediaCommand {
         }
     }
 }
-

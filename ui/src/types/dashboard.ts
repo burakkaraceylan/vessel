@@ -1,4 +1,3 @@
-import type { Theme } from "./theme";
 import type { WidgetInstance } from "./widget";
 
 export interface Dashboard {
@@ -6,6 +5,19 @@ export interface Dashboard {
 	name: string;
 	columns: number;
 	rows: number;
-	widgets: WidgetInstance[];
+	widgets?: WidgetInstance[];
+	zones?: Zone[];
 	theme?: string;
+}
+
+export interface ZoneProfile {
+	condition: string;
+	default: boolean;
+	widgets?: WidgetInstance[];
+}
+
+export interface Zone {
+	position: { col: number; row: number };
+	size: { w: number; h: number };
+	profiles?: ZoneProfile[];
 }

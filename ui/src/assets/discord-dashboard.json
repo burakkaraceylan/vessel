@@ -34,8 +34,8 @@
 			"size": { "w": 3, "h": 3 },
 			"position": { "col": 5, "row": 1 },
 			"config": {
-				"image": "${media.track_changed.cover_art_url}",
-				"label": "${media.track_changed.title}",
+				"image": "${media.track_changed.cover_art_url != undefined ? media.track_changed.cover_art_url : \"https://i.giphy.com/tdDByjqJsARvQvCPqq.webp\"}",
+				"label": "${media.track_changed.title != undefined ? media.track_changed.title : \"\"}",
 				"labelPosition": "b",
 				"backgroundColor": "black",
 				"borderColor": "var(--border-color)"
@@ -71,7 +71,7 @@
 				}
 			}
 		},
-				{
+		{
 			"id": "media-next",
 			"type": "button",
 			"size": { "w": 1, "h": 1 },
@@ -85,6 +85,155 @@
 					"action": "next"
 				}
 			}
+		},
+		{
+			"id": "sf6",
+			"type": "button",
+			"size": { "w": 1, "h": 1 },
+			"position": { "col": 0, "row": 3 },
+			"config": {
+				"backgroundColor": "black",
+				"image": "/packs/hexaza/031-GAMES_street-fighter-6.jpg",
+				"borderColor": "var(--border-color)",
+				"action": {
+					"module": "system",
+					"action": "open_uri",
+					"params": { "uri": "steam://rungameid/1364780" }
+				}
+			}
+		},
+		{
+			"id": "apple-music",
+			"type": "button",
+			"size": { "w": 1, "h": 1 },
+			"position": { "col": 1, "row": 3 },
+			"config": {
+				"backgroundColor": "black",
+				"image": "/packs/hexaza/006-ELGATO-WAVE_music.jpg",
+				"borderColor": "var(--border-color)",
+				"action": {
+					"module": "system",
+					"action": "spawn_exe",
+					"params": {
+						"exe": "C:\\Users\\Burak\\AppData\\Local\\Microsoft\\WindowsApps\\AppleMusic.exe"
+					}
+				}
+			}
+		}
+	],
+	"zones": [
+		{
+			"position": { "col": 0, "row": 1 },
+			"size": { "w": 5, "h": 1 },
+			"profiles": [
+				{
+					"name": "In a call",
+					"condition": "${system.window_focus_changed.exe == \"Code.exe\"}",
+					"default": false,
+					"widgets": [
+						{
+							"id": "vscode-vim-mode",
+							"type": "button",
+							"size": { "w": 1, "h": 1 },
+							"position": { "col": 0, "row": 0 },
+							"config": {
+								"backgroundColor": "black",
+								"image": "/packs/hexaza/000-BLANK_background-1.jpg",
+								"borderColor": "var(--border-color)",
+								"label": "Vim Mode",
+								"action": {
+									"module": "system",
+									"action": "send_keys",
+									"params": {
+										"keys": "ctrl+shift+alt+v"
+									}
+								}
+							}
+						},
+						{
+							"id": "vscode-format",
+							"type": "button",
+							"size": { "w": 1, "h": 1 },
+							"position": { "col": 1, "row": 0 },
+							"config": {
+								"backgroundColor": "black",
+								"image": "/packs/hexaza/000-BLANK_background-1.jpg",
+								"borderColor": "var(--border-color)",
+								"label": "Format",
+								"action": {
+									"module": "system",
+									"action": "send_keys",
+									"params": {
+										"keys": "shift+alt+f"
+									}
+								}
+							}
+						},
+						{
+							"id": "vscode-terminal",
+							"type": "button",
+							"size": { "w": 1, "h": 1 },
+							"position": { "col": 2, "row": 0 },
+							"config": {
+								"backgroundColor": "black",
+								"image": "/packs/hexaza/000-BLANK_background-1.jpg",
+								"borderColor": "var(--border-color)",
+								"label": "Terminal",
+								"action": {
+									"module": "system",
+									"action": "send_keys",
+									"params": {
+										"keys": "ctrl+`"
+									}
+								}
+							}
+						},
+						{
+							"id": "vscode-run",
+							"type": "button",
+							"size": { "w": 1, "h": 1 },
+							"position": { "col": 3, "row": 0 },
+							"config": {
+								"backgroundColor": "black",
+								"image": "/packs/hexaza/000-BLANK_background-1.jpg",
+								"borderColor": "var(--border-color)",
+								"label": "Run",
+								"action": {
+									"module": "system",
+									"action": "send_keys",
+									"params": {
+										"keys": "f5"
+									}
+								}
+							}
+						},
+						{
+							"id": "vscode-stop",
+							"type": "button",
+							"size": { "w": 1, "h": 1 },
+							"position": { "col": 4, "row": 0 },
+							"config": {
+								"backgroundColor": "black",
+								"image": "/packs/hexaza/000-BLANK_background-1.jpg",
+								"borderColor": "var(--border-color)",
+								"label": "Stop",
+								"action": {
+									"module": "system",
+									"action": "send_keys",
+									"params": {
+										"keys": "shift+f5"
+									}
+								}
+							}
+						}
+					]
+				},
+				{
+					"name": "Default",
+					"condition": "true",
+					"default": true
+				}
+			]
 		}
 	]
 }

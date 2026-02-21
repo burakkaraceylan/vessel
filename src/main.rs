@@ -31,6 +31,9 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let media_module = media::MediaModule::new(toml::Table::new()).await?;
     module_manager.register_module(Box::new(media_module));
 
+    let system_module = modules::system::SystemModule::new(toml::Table::new()).await?;
+    module_manager.register_module(Box::new(system_module));
+
     module_manager.run_all(token.clone()).await?;
 
     let assets = module_manager.assets.clone();
@@ -51,7 +54,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     axum::serve(listener, build_router(state))
         .with_graceful_shutdown(token.cancelled_owned())
         .await?;
-
 
     Ok(())
 }
