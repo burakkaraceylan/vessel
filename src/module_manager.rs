@@ -1,23 +1,21 @@
-use crate::module::{Module, ModuleCommand, ModuleContext, ModuleEvent};
-use anyhow::Context;
+use crate::module::{EventPublisher, Module, ModuleCommand, ModuleContext, ModuleEvent};
 use dashmap::DashMap;
 use std::collections::HashMap;
 use std::sync::Arc;
-use tokio::sync::{broadcast, mpsc};
+use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
 
 pub struct ModuleManager {
     senders: HashMap<&'static str, mpsc::Sender<ModuleCommand>>,
     modules: HashMap<&'static str, (Box<dyn Module>, mpsc::Receiver<ModuleCommand>)>,
-    event_tx: broadcast::Sender<ModuleEvent>,
+    event_publisher: EventPublisher,
     pub assets: Arc<DashMap<String, (Vec<u8>, String)>>,
 }
 
 impl ModuleManager {
     pub fn new() -> Self {
-        let (event_tx, _) = broadcast::channel(32);
         ModuleManager {
-            event_tx,
+            event_publisher: EventPublisher::new(),
             senders: HashMap::new(),
             modules: HashMap::new(),
             assets: Arc::new(DashMap::new()),
@@ -43,8 +41,12 @@ impl ModuleManager {
         }
     }
 
-    pub fn subscribe(&self) -> broadcast::Receiver<ModuleEvent> {
-        self.event_tx.subscribe()
+    pub fn subscribe(&self) -> tokio::sync::broadcast::Receiver<ModuleEvent> {
+        self.event_publisher.subscribe()
+    }
+
+    pub fn snapshot(&self) -> Vec<ModuleEvent> {
+        self.event_publisher.snapshot()
     }
 
     pub async fn route_command(
@@ -64,7 +66,12 @@ impl ModuleManager {
 
     pub async fn run_all(&mut self, cancel_token: CancellationToken) -> anyhow::Result<()> {
         for (_, (module, rx)) in self.modules.drain() {
-            let ctx = ModuleContext::new(cancel_token.clone(), rx, self.event_tx.clone(), self.assets.clone());
+            let ctx = ModuleContext::new(
+                cancel_token.clone(),
+                rx,
+                self.event_publisher.clone(),
+                self.assets.clone(),
+            );
             tokio::spawn(async move {
                 if let Err(e) = module.run(ctx).await {
                     eprintln!("Module error: {}", e);

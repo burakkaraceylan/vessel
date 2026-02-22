@@ -18,7 +18,10 @@ impl From<SmtcOutbound> for MediaEvent {
 impl IntoModuleEvent for MediaEvent {
     fn into_event(self) -> ModuleEvent {
         match self {
-            MediaEvent::TrackChanged(track) => ModuleEvent {
+            // Both TrackChanged and PlaybackStopped share "media/now_playing" as their
+            // cache key so they occupy a single cache slot and overwrite each other.
+            // A snapshot never sends both — only the most recent one wins.
+            MediaEvent::TrackChanged(track) => ModuleEvent::Stateful {
                 source: "media",
                 event: "track_changed".to_string(),
                 data: serde_json::json!({
@@ -31,11 +34,13 @@ impl IntoModuleEvent for MediaEvent {
                     "cover_art_url": track.cover_art_key.as_deref()
                         .map(|k| format!("/api/assets/{k}")),
                 }),
+                cache_key: "media/now_playing",
             },
-            MediaEvent::PlaybackStopped => ModuleEvent {
+            MediaEvent::PlaybackStopped => ModuleEvent::Stateful {
                 source: "media",
                 event: "playback_stopped".to_string(),
                 data: serde_json::Value::Null,
+                cache_key: "media/now_playing",
             },
         }
     }

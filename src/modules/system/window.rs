@@ -10,16 +10,16 @@ use windows::Win32::System::Threading::{
 };
 
 use crate::{
-    module::{IntoModuleEvent, ModuleEvent},
+    module::{EventPublisher, IntoModuleEvent},
     modules::system::events::SystemEvent,
 };
 
 pub struct WindowModule {
-    pub event_tx: tokio::sync::broadcast::Sender<ModuleEvent>,
+    pub event_tx: EventPublisher,
 }
 
 impl WindowModule {
-    pub fn new(event_tx: tokio::sync::broadcast::Sender<ModuleEvent>) -> Self {
+    pub fn new(event_tx: EventPublisher) -> Self {
         Self { event_tx }
     }
 

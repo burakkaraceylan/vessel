@@ -53,8 +53,17 @@ async fn assets_handler(
 }
 
 async fn handle_websocket(mut socket: WebSocket, state: &Arc<AppState>) -> anyhow::Result<()> {
+    // Subscribe before snapshot to guarantee no events are missed between the two.
     let mut event_rx = state.module_manager.subscribe();
+
     println!("WebSocket connection established");
+
+    for event in state.module_manager.snapshot() {
+        let msg = OutgoingMessage::from(event);
+        let json = serde_json::to_string(&msg)?;
+        socket.send(Message::Text(json.into())).await?;
+    }
+
     loop {
         tokio::select! {
             _ = state.cancel_token.cancelled() => {

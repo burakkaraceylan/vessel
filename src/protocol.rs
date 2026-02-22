@@ -1,4 +1,4 @@
-use crate::module::{ModuleCommand, ModuleEvent};
+use crate::module::ModuleEvent;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 
@@ -22,9 +22,9 @@ pub struct OutgoingMessage {
 impl From<ModuleEvent> for OutgoingMessage {
     fn from(event: ModuleEvent) -> Self {
         OutgoingMessage {
-            module: event.source,
-            event: event.event,
-            data: event.data,
+            module: event.source(),
+            event: event.event_name().to_owned(),
+            data: event.data().clone(),
         }
     }
 }
