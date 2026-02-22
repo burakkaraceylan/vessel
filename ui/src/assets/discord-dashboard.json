@@ -34,7 +34,7 @@
 			"size": { "w": 3, "h": 3 },
 			"position": { "col": 5, "row": 1 },
 			"config": {
-				"image": "${media.track_changed.cover_art_url}",
+				"image": "${media.track_changed.cover_art_url != undefined ? media.track_changed.cover_art_url : \"https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExNWVnbTI5M3NweGw3bGhwaWxjc3EzbHpuZTBpNWpuNzhibW90NXI3eCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/Ll1rEkDebTIdO/giphy.gif\"}",
 				"label": "${media.track_changed.title != undefined ? media.track_changed.title : \"\"}",
 				"labelPosition": "b",
 				"backgroundColor": "black",

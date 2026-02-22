@@ -130,6 +130,8 @@ See `discord/commands.rs` and `discord/events.rs` for the reference implementati
 - Unity Editor module (scene switching, play mode control)
 - OBS module
 - Home Assistant module
+- Bambu Lab 3D printer module (print progress, status, remote control via MQTT)
+- Windows Notifications module (UserNotificationListener WinRT API — per-app notification counts and toast content, drives widget badges)
 - WASM plugin system for community modules
 - Module marketplace
 - Visual node editor for complex action sequences (trigger → condition → action chains)

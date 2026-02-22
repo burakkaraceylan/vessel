@@ -1,9 +1,11 @@
 use std::sync::Arc;
 
+use crate::api;
+use crate::dashboard::DashboardStore;
 use crate::module_manager::ModuleManager;
 use crate::protocol::{IncomingMessage, OutgoingMessage};
-use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::extract::State;
+use axum::extract::ws::{Message, WebSocket, WebSocketUpgrade};
 use axum::response::IntoResponse;
 use axum::{Router, routing::get};
 use dashmap::DashMap;
@@ -13,6 +15,7 @@ use tokio_util::sync::CancellationToken;
 pub struct AppState {
     pub module_manager: ModuleManager,
     pub assets: Arc<DashMap<String, (Vec<u8>, String)>>,
+    pub dashboard_store: Arc<DashboardStore>,
     pub cancel_token: CancellationToken,
 }
 
@@ -20,6 +23,7 @@ pub fn build_router(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/ws", get(ws_handler))
         .route("/api/assets/{key}", get(assets_handler))
+        .nest("/api", api::router().with_state(state.clone()))
         .with_state(state)
 }
 
