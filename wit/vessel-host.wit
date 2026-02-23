@@ -39,7 +39,7 @@ interface host {
     call: func(module: string, name: string, version: u32, params: string) -> result<string, string>;
 
     // ── Network ────────────────────────────────────────────────────────────
-    http-request: func(req: http-request) -> result<http-response, string>;
+    send-http-request: func(req: http-request) -> result<http-response, string>;
     /// Returns an opaque connection handle.
     websocket-connect: func(url: string) -> result<u32, string>;
     websocket-send: func(handle: u32, message: string) -> result<_, string>;
