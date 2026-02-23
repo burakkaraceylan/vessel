@@ -11,6 +11,9 @@ wasmtime::component::bindgen!({
 
 pub struct HostData {
     pub module_id: String,
+    /// Pre-leaked `&'static str` version of `module_id` for use in `ModuleEvent::source`.
+    /// Computed once at construction — avoids leaking a new allocation on every `emit()` call.
+    pub module_id_static: &'static str,
     pub capability: Arc<CapabilityValidator>,
     pub event_publisher: EventPublisher,
     pub timer_tx: mpsc::Sender<u32>,
@@ -35,7 +38,7 @@ impl vessel::host::host::Host for HostData {
         let data: serde_json::Value = serde_json::from_str(&event.data)
             .unwrap_or(serde_json::Value::Null);
         self.event_publisher.send(ModuleEvent::Transient {
-            source: Box::leak(self.module_id.clone().into_boxed_str()),
+            source: self.module_id_static,
             event: event.name,
             data,
         });
