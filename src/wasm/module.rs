@@ -14,19 +14,22 @@ pub struct WasmModule {
     manifest: ModuleManifest,
     wasm_path: PathBuf,
     engine: Engine,
+    /// Leaked once at load time — reused by both `name()` and `run()`.
+    name_static: &'static str,
 }
 
 impl WasmModule {
     pub fn load(module_dir: PathBuf) -> anyhow::Result<Self> {
         let manifest = load_manifest(&module_dir)?;
         let wasm_path = module_dir.join("module.wasm");
+        let name_static: &'static str = Box::leak(manifest.id.clone().into_boxed_str());
 
         let mut config = Config::new();
         config.async_support(true);
         config.wasm_component_model(true);
         let engine = Engine::new(&config)?;
 
-        Ok(WasmModule { manifest, wasm_path, engine })
+        Ok(WasmModule { manifest, wasm_path, engine, name_static })
     }
 }
 
@@ -37,7 +40,7 @@ impl Module for WasmModule {
     }
 
     fn name(&self) -> &'static str {
-        Box::leak(self.manifest.id.clone().into_boxed_str())
+        self.name_static
     }
 
     async fn run(&self, ctx: ModuleContext) -> anyhow::Result<()> {
@@ -47,8 +50,8 @@ impl Module for WasmModule {
         let (timer_tx, mut timer_rx) = mpsc::channel::<u32>(32);
         let (ws_tx, mut ws_rx) = mpsc::channel::<(u32, String)>(32);
 
-        // Pre-compute the &'static str for ModuleEvent::source (one leak per module instance)
-        let module_id_static: &'static str = Box::leak(self.manifest.id.clone().into_boxed_str());
+        // Reuse the &'static str computed once at load time.
+        let module_id_static: &'static str = self.name_static;
 
         // Storage directory: %APPDATA%/Local/vessel/modules/<id>/storage/
         let storage_dir = dirs::data_local_dir()
@@ -114,11 +117,9 @@ impl Module for WasmModule {
                 }
 
                 Ok(event) = event_rx.recv() => {
-                    let subs = store.data().subscriptions.clone();
                     let event_key = format!("{}.{}", event.source(), event.event_name());
-                    let matches = subs.iter().any(|p| {
-                        glob::Pattern::new(p).map(|pat| pat.matches(&event_key)).unwrap_or(false)
-                    });
+                    let matches = store.data().subscriptions.iter()
+                        .any(|pat| pat.matches(&event_key));
                     if matches {
                         let ts = std::time::SystemTime::now()
                             .duration_since(std::time::UNIX_EPOCH)

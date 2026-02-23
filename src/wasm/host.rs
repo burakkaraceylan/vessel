@@ -1,5 +1,6 @@
 use crate::module::{EventPublisher, ModuleEvent};
 use crate::wasm::capability::CapabilityValidator;
+use glob::Pattern;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
@@ -18,7 +19,8 @@ pub struct HostData {
     pub event_publisher: EventPublisher,
     pub timer_tx: mpsc::Sender<u32>,
     pub ws_tx: mpsc::Sender<(u32, String)>,
-    pub subscriptions: Vec<String>,
+    /// Pre-compiled glob patterns from `subscribe()` calls — avoids recompiling on every event.
+    pub subscriptions: Vec<Pattern>,
     pub storage_dir: std::path::PathBuf,
     pub timer_handles: std::collections::HashMap<u32, tokio::task::JoinHandle<()>>,
     pub ws_handles: std::collections::HashMap<u32, tokio::sync::mpsc::Sender<String>>,
@@ -34,7 +36,9 @@ impl vessel::host::host::Host for HostData {
         if let Err(e) = self.capability.check_subscribe(&pattern) {
             return Err(e.to_string());
         }
-        self.subscriptions.push(pattern);
+        // Pattern is valid (capability check uses Pattern::new internally), so unwrap is safe.
+        let compiled = Pattern::new(&pattern).map_err(|e| e.to_string())?;
+        self.subscriptions.push(compiled);
         Ok(())
     }
 
