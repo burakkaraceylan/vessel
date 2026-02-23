@@ -1,0 +1,79 @@
+package vessel:host@1.0.0;
+
+interface types {
+    record event {
+        module: string,
+        name: string,
+        version: u32,
+        /// JSON-encoded payload — avoids the WIT interface changing when module payloads change.
+        data: string,
+        timestamp: u64,
+    }
+
+    record http-request {
+        method: string,
+        url: string,
+        headers: list<tuple<string, string>>,
+        body: option<string>,
+    }
+
+    record http-response {
+        status: u32,
+        headers: list<tuple<string, string>>,
+        body: string,
+    }
+}
+
+/// Functions the host (Vessel) provides to the WASM module.
+interface host {
+    use types.{event, http-request, http-response};
+
+    // ── Event bus ──────────────────────────────────────────────────────────
+    /// Subscribe to events matching `pattern` (glob: "discord.voice.*").
+    subscribe: func(pattern: string) -> result<_, string>;
+    /// Emit a new event onto the Vessel event bus.
+    emit: func(event: event) -> result<_, string>;
+
+    // ── Driver calls ───────────────────────────────────────────────────────
+    /// Route a command to a native module. `params` is a JSON string. Returns JSON string.
+    call: func(module: string, name: string, version: u32, params: string) -> result<string, string>;
+
+    // ── Network ────────────────────────────────────────────────────────────
+    http-request: func(req: http-request) -> result<http-response, string>;
+    /// Returns an opaque connection handle.
+    websocket-connect: func(url: string) -> result<u32, string>;
+    websocket-send: func(handle: u32, message: string) -> result<_, string>;
+    websocket-close: func(handle: u32) -> result<_, string>;
+
+    // ── Storage (auto-namespaced by module id on the host side) ───────────
+    storage-get: func(key: string) -> option<string>;
+    storage-set: func(key: string, value: string) -> result<_, string>;
+    storage-delete: func(key: string) -> result<_, string>;
+
+    // ── Timers ─────────────────────────────────────────────────────────────
+    /// Returns an opaque timer handle.
+    set-timeout: func(ms: u64) -> u32;
+    set-interval: func(ms: u64) -> u32;
+    clear-timer: func(handle: u32);
+
+    // ── Logging ────────────────────────────────────────────────────────────
+    log: func(level: string, message: string);
+}
+
+/// Functions the WASM module must export to the host.
+interface guest {
+    use types.{event};
+
+    on-load: func() -> result<_, string>;
+    on-unload: func() -> result<_, string>;
+    on-event: func(event: event) -> result<_, string>;
+    /// `params` is a JSON string. Returns JSON string response.
+    on-command: func(action: string, params: string) -> result<string, string>;
+    on-timer: func(handle: u32) -> result<_, string>;
+    on-websocket-message: func(handle: u32, message: string) -> result<_, string>;
+}
+
+world vessel-module {
+    import host;
+    export guest;
+}
