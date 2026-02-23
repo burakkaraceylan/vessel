@@ -101,11 +101,8 @@ impl Module for DiscordModule {
     }
 
     async fn run(&self, mut ctx: ModuleContext) -> Result<(), anyhow::Error> {
-        self.voice_controller
-            .lock()
-            .await
-            .subscribe_voice_settings()
-            .await?;
+        self.voice_controller.lock().await.subscribe_voice_settings().await?;
+        self.voice_controller.lock().await.subscribe_voice_channel_select().await?;
 
         // Fetch and emit initial state so the cache is populated before any client connects.
         match self.voice_controller.lock().await.get_voice_settings().await {
@@ -201,6 +198,22 @@ impl Module for DiscordModule {
                                             data: serde_json::json!({ "active": active }),
                                             cache_key: "discord/speaking",
                                         });
+                                    }
+                                }
+                                "voice_channel_select" => {
+                                    // Clear stale speaking state from the old channel.
+                                    self.speaking_users.lock().await.clear();
+                                    let _ = ctx.event_tx.send(ModuleEvent::Stateful {
+                                        source: "discord",
+                                        event: "speaking".to_string(),
+                                        data: serde_json::json!({ "active": false }),
+                                        cache_key: "discord/speaking",
+                                    });
+                                    // Re-subscribe to speaking for the new channel (None = left channel).
+                                    if let Some(channel_id) = event.data()["channel_id"].as_str() {
+                                        if let Err(e) = self.voice_controller.lock().await.subscribe_speaking(channel_id).await {
+                                            warn!("Failed to subscribe to speaking for channel {}: {}", channel_id, e);
+                                        }
                                     }
                                 }
                                 _ => {

@@ -3,7 +3,7 @@ use crate::modules::discord::events::DiscordEvent;
 use crate::modules::discord::ipc::DiscordIpc;
 use crate::modules::discord::oauth;
 use crate::modules::discord::token_cache;
-use anyhow::{Context, Result, anyhow};
+use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use tracing::{info, warn};
@@ -322,6 +322,15 @@ impl DiscordVoiceController {
         Ok(())
     }
 
+    /// Subscribe to voice channel selection changes (fires when the user joins/switches/leaves).
+    pub async fn subscribe_voice_channel_select(&mut self) -> Result<()> {
+        self.ipc
+            .subscribe("VOICE_CHANNEL_SELECT", serde_json::json!({}))
+            .await?;
+        info!("Subscribed to VOICE_CHANNEL_SELECT");
+        Ok(())
+    }
+
     /// Subscribe to speaking start/stop events for a voice channel.
     pub async fn subscribe_speaking(&mut self, channel_id: &str) -> Result<()> {
         self.ipc
@@ -340,35 +349,59 @@ impl DiscordVoiceController {
         Ok(())
     }
 
-    /// Read the next event/response from Discord (blocking).
-    /// Use this in a loop after subscribing to events.
+    /// Read the next recognised event from Discord (blocking).
+    ///
+    /// Loops internally, discarding unrecognised dispatches (unknown `evt` values)
+    /// and responding to Discord Ping frames. Only hard I/O errors are propagated
+    /// as `Err`, so callers can break the loop on pipe failures without false-positives
+    /// from harmless events like ERROR or VOICE_CHANNEL_SELECT.
     pub async fn recv_event(&mut self) -> Result<ModuleEvent> {
-        let (_opcode, data) = self.ipc.recv().await?;
+        use crate::modules::discord::ipc::OpCode;
+        loop {
+            let (opcode, data) = self.ipc.recv().await?;
 
-        let evt = data["evt"]
-            .as_str()
-            .ok_or_else(|| anyhow!("missing evt field"))?;
-        match evt {
-            "VOICE_SETTINGS_UPDATE" => {
-                let settings: VoiceSettings = serde_json::from_value(data["data"].clone())
-                    .context("Failed to parse VOICE_SETTINGS_UPDATE data")?;
-                Ok(DiscordEvent::VoiceSettingsUpdate(settings).into_event())
+            // Discord sends Ping frames periodically; respond and keep waiting.
+            if opcode == OpCode::Ping {
+                self.ipc.send(OpCode::Pong, &data).await?;
+                continue;
             }
-            "SPEAKING_START" => {
-                let user_id = data["data"]["user_id"]
-                    .as_str()
-                    .context("missing user_id in SPEAKING_START")?
-                    .to_string();
-                Ok(DiscordEvent::SpeakingStart { user_id }.into_event())
+
+            let Some(evt) = data["evt"].as_str() else {
+                // No evt field — command ack or other non-event frame; skip it.
+                continue;
+            };
+
+            match evt {
+                "VOICE_SETTINGS_UPDATE" => {
+                    let settings: VoiceSettings = serde_json::from_value(data["data"].clone())
+                        .context("Failed to parse VOICE_SETTINGS_UPDATE data")?;
+                    return Ok(DiscordEvent::VoiceSettingsUpdate(settings).into_event());
+                }
+                "SPEAKING_START" => {
+                    let user_id = data["data"]["user_id"]
+                        .as_str()
+                        .context("missing user_id in SPEAKING_START")?
+                        .to_string();
+                    return Ok(DiscordEvent::SpeakingStart { user_id }.into_event());
+                }
+                "SPEAKING_STOP" => {
+                    let user_id = data["data"]["user_id"]
+                        .as_str()
+                        .context("missing user_id in SPEAKING_STOP")?
+                        .to_string();
+                    return Ok(DiscordEvent::SpeakingStop { user_id }.into_event());
+                }
+                "VOICE_CHANNEL_SELECT" => {
+                    let channel_id = data["data"]["channel_id"].as_str().map(|s| s.to_string());
+                    return Ok(DiscordEvent::VoiceChannelSelect { channel_id }.into_event());
+                }
+                _ => {
+                    // Unhandled but valid Discord event (e.g. ERROR).
+                    // Log and continue — these must not kill the module loop.
+                    warn!("Skipping unhandled Discord event: {}", evt);
+                    continue;
+                }
             }
-            "SPEAKING_STOP" => {
-                let user_id = data["data"]["user_id"]
-                    .as_str()
-                    .context("missing user_id in SPEAKING_STOP")?
-                    .to_string();
-                Ok(DiscordEvent::SpeakingStop { user_id }.into_event())
-            }
-            other => Err(anyhow!("unknown discord event: {}", other)),
         }
     }
 
