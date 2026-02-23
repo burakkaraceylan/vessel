@@ -117,4 +117,18 @@ impl DashboardStore {
 
         Ok(())
     }
+
+    pub fn delete_dashboard(&self, id: &str) -> anyhow::Result<()> {
+        let dir = dirs::data_local_dir()
+            .context("Could not determine local data directory")?
+            .join("vessel")
+            .join("dashboards");
+
+        let path = dir.join(format!("{}.json", id));
+        if path.exists() {
+            std::fs::remove_file(path)?;
+        }
+
+        Ok(())
+    }
 }

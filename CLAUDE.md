@@ -277,6 +277,7 @@ Modules declare their capabilities so the UI can build config dropdowns dynamica
 12. Custom widget loading (Web Components from vessel-data/widgets/)
 13. Import/export (dashboards, themes, widget presets)
 14. Gesture system (longPress, swipe, doubleTap)
+15. Navigation gestures: edge-swipe left/right to cycle dashboards, edge-swipe down to open settings panel. These are system-level gestures distinct from per-widget action gestures — triggered from the screen edge (e.g. left/right 15% of screen width) so they don't conflict with widget interactions.
 
 ## Development
 
