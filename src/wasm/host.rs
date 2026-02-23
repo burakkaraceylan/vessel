@@ -82,16 +82,29 @@ impl vessel::host::host::Host for HostData {
         Err("not yet implemented".into())
     }
 
-    async fn storage_get(&mut self, _key: String) -> Option<String> {
-        None
+    async fn storage_get(&mut self, key: String) -> Option<String> {
+        if self.capability.check_storage().is_err() {
+            return None;
+        }
+        let path = self.storage_dir.join(sanitize_key(&key));
+        std::fs::read_to_string(path).ok()
     }
 
-    async fn storage_set(&mut self, _key: String, _value: String) -> Result<(), String> {
-        Err("not yet implemented".into())
+    async fn storage_set(&mut self, key: String, value: String) -> Result<(), String> {
+        if let Err(e) = self.capability.check_storage() {
+            return Err(e.to_string());
+        }
+        let path = self.storage_dir.join(sanitize_key(&key));
+        std::fs::write(path, value).map_err(|e| e.to_string())
     }
 
-    async fn storage_delete(&mut self, _key: String) -> Result<(), String> {
-        Err("not yet implemented".into())
+    async fn storage_delete(&mut self, key: String) -> Result<(), String> {
+        if let Err(e) = self.capability.check_storage() {
+            return Err(e.to_string());
+        }
+        let path = self.storage_dir.join(sanitize_key(&key));
+        let _ = std::fs::remove_file(path); // Ignore not-found
+        Ok(())
     }
 
     async fn set_timeout(&mut self, _ms: u64) -> u32 {
@@ -108,4 +121,11 @@ impl vessel::host::host::Host for HostData {
     async fn log(&mut self, level: String, message: String) {
         println!("[{}] [{}] {}", level.to_uppercase(), self.module_id, message);
     }
+}
+
+/// Converts a storage key to a safe filename — replaces non-alphanumeric chars with underscores.
+fn sanitize_key(key: &str) -> String {
+    key.chars()
+        .map(|c| if c.is_alphanumeric() || c == '_' || c == '-' { c } else { '_' })
+        .collect()
 }
