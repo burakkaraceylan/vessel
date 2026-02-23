@@ -1,0 +1,23 @@
+{
+  "planPath": "docs/plans/2026-02-24-wasm-module-system.md",
+  "tasks": [
+    {"id": 1, "subject": "Task 1: Redesign src/protocol.rs", "status": "pending"},
+    {"id": 2, "subject": "Task 2: Update src/vessel.rs WebSocket handler", "status": "pending", "blockedBy": [1]},
+    {"id": 3, "subject": "Task 3: Update React WebSocket client", "status": "pending", "blockedBy": [1]},
+    {"id": 4, "subject": "Task 4: Create wit/vessel-host.wit", "status": "pending"},
+    {"id": 5, "subject": "Task 5: Add Wasmtime dependencies to Cargo.toml", "status": "pending"},
+    {"id": 6, "subject": "Task 6: Create src/wasm/ module structure + manifest types", "status": "pending", "blockedBy": [4, 5]},
+    {"id": 7, "subject": "Task 7: Implement src/wasm/capability.rs", "status": "pending", "blockedBy": [6]},
+    {"id": 8, "subject": "Task 8: Implement src/wasm/host.rs - event bus + logging", "status": "pending", "blockedBy": [6, 7]},
+    {"id": 9, "subject": "Task 9: Implement src/wasm/module.rs - WasmModule skeleton", "status": "pending", "blockedBy": [8]},
+    {"id": 10, "subject": "Task 10: Implement storage host functions", "status": "pending", "blockedBy": [8]},
+    {"id": 11, "subject": "Task 11: Implement timer host functions", "status": "pending", "blockedBy": [8]},
+    {"id": 12, "subject": "Task 12: Implement HTTP host function", "status": "pending", "blockedBy": [8]},
+    {"id": 13, "subject": "Task 13: Implement WebSocket host functions", "status": "pending", "blockedBy": [8]},
+    {"id": 14, "subject": "Task 14: Auto-discover WASM modules at startup", "status": "pending", "blockedBy": [9]},
+    {"id": 15, "subject": "Task 15: Create Home Assistant guest module project", "status": "pending", "blockedBy": [14]},
+    {"id": 16, "subject": "Task 16: Implement HA WebSocket connection and event re-emission", "status": "pending", "blockedBy": [15]},
+    {"id": 17, "subject": "Task 17: Create /api/modules REST endpoint", "status": "pending", "blockedBy": [6]}
+  ],
+  "lastUpdated": "2026-02-24T00:00:00Z"
+}
