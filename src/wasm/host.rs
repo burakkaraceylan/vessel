@@ -107,15 +107,46 @@ impl vessel::host::host::Host for HostData {
         Ok(())
     }
 
-    async fn set_timeout(&mut self, _ms: u64) -> u32 {
-        0
+    async fn set_timeout(&mut self, ms: u64) -> u32 {
+        if self.capability.check_timers().is_err() {
+            return 0;
+        }
+        let handle = self.next_handle;
+        self.next_handle += 1;
+        let tx = self.timer_tx.clone();
+        let join = tokio::spawn(async move {
+            tokio::time::sleep(tokio::time::Duration::from_millis(ms)).await;
+            let _ = tx.send(handle).await;
+        });
+        self.timer_handles.insert(handle, join);
+        handle
     }
 
-    async fn set_interval(&mut self, _ms: u64) -> u32 {
-        0
+    async fn set_interval(&mut self, ms: u64) -> u32 {
+        if self.capability.check_timers().is_err() {
+            return 0;
+        }
+        let handle = self.next_handle;
+        self.next_handle += 1;
+        let tx = self.timer_tx.clone();
+        let join = tokio::spawn(async move {
+            let mut interval = tokio::time::interval(tokio::time::Duration::from_millis(ms));
+            interval.tick().await; // skip the immediate first tick
+            loop {
+                interval.tick().await;
+                if tx.send(handle).await.is_err() {
+                    break;
+                }
+            }
+        });
+        self.timer_handles.insert(handle, join);
+        handle
     }
 
-    async fn clear_timer(&mut self, _handle: u32) {
+    async fn clear_timer(&mut self, handle: u32) {
+        if let Some(join) = self.timer_handles.remove(&handle) {
+            join.abort();
+        }
     }
 
     async fn log(&mut self, level: String, message: String) {
