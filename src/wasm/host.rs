@@ -65,9 +65,37 @@ impl vessel::host::host::Host for HostData {
 
     async fn send_http_request(
         &mut self,
-        _req: vessel::host::types::HttpRequest,
+        req: vessel::host::types::HttpRequest,
     ) -> Result<vessel::host::types::HttpResponse, String> {
-        Err("not yet implemented".into())
+        if let Err(e) = self.capability.check_network_http() {
+            return Err(e.to_string());
+        }
+
+        let client = reqwest::Client::new();
+        let method = reqwest::Method::from_bytes(req.method.as_bytes())
+            .map_err(|e| e.to_string())?;
+
+        let mut builder = client.request(method, &req.url);
+        for (key, value) in &req.headers {
+            builder = builder.header(key.as_str(), value.as_str());
+        }
+        if let Some(body) = req.body {
+            builder = builder.body(body);
+        }
+
+        match builder.send().await {
+            Ok(response) => {
+                let status = response.status().as_u16() as u32;
+                let headers: Vec<(String, String)> = response
+                    .headers()
+                    .iter()
+                    .map(|(k, v)| (k.to_string(), v.to_str().unwrap_or("").to_string()))
+                    .collect();
+                let body = response.text().await.unwrap_or_default();
+                Ok(vessel::host::types::HttpResponse { status, headers, body })
+            }
+            Err(e) => Err(e.to_string()),
+        }
     }
 
     async fn websocket_connect(&mut self, _url: String) -> Result<u32, String> {
