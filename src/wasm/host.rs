@@ -25,6 +25,10 @@ pub struct HostData {
     pub next_handle: u32,
 }
 
+// `types::Host` is an empty marker trait — HostData must implement it so
+// that `VesselModule::add_to_linker` can satisfy both interface bounds.
+impl vessel::host::types::Host for HostData {}
+
 impl vessel::host::host::Host for HostData {
     async fn subscribe(&mut self, pattern: String) -> Result<(), String> {
         if let Err(e) = self.capability.check_subscribe(&pattern) {
