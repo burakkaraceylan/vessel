@@ -6,6 +6,7 @@ mod module_manager;
 mod modules;
 mod protocol;
 mod vessel;
+mod wasm;
 
 use std::sync::Arc;
 
