@@ -82,16 +82,21 @@ async fn handle_websocket(mut socket: WebSocket, state: &Arc<AppState>) -> anyho
                                 continue;
                             }
                             match serde_json::from_str::<IncomingMessage>(line) {
-                                Ok(msg) => {
-                                    println!("Received command: module='{}', action='{}'", msg.module, msg.action);
-                                    if let Err(e) = state.module_manager.route_command(
-                                        &msg.module, msg.action, msg.params,
-                                    ).await {
+                                Ok(IncomingMessage::Call { request_id, module, name, params, .. }) => {
+                                    println!("Call: module='{}', name='{}'", module, name);
+                                    if let Err(e) = state.module_manager.route_command(&module, name, params).await {
                                         eprintln!("Route error: {}", e);
                                     }
+                                    // TODO: send Response back with request_id once request tracking is wired
+                                    let _ = request_id;
+                                }
+                                Ok(IncomingMessage::Subscribe { module, name }) => {
+                                    // Subscriptions are currently implicit — all clients receive all events.
+                                    // Explicit filtering is a future task.
+                                    println!("Subscribe: module='{}', name='{}'", module, name);
                                 }
                                 Err(e) => {
-                                    eprintln!("Invalid JSON: {}", e);
+                                    eprintln!("Invalid message: {}", e);
                                 }
                             }
                         }
