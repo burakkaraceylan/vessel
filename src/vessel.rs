@@ -13,7 +13,7 @@ use axum::{Router, routing::get};
 use dashmap::DashMap;
 use tokio::sync::broadcast;
 use tokio_util::sync::CancellationToken;
-use tracing::{debug, error, info, trace, Instrument};
+use tracing::{debug, error, info, info_span, trace, warn, Instrument};
 
 pub struct AppState {
     pub module_manager: ModuleManager,
@@ -36,7 +36,7 @@ async fn ws_handler(
     State(state): State<Arc<AppState>>,
 ) -> impl axum::response::IntoResponse {
     ws.on_upgrade(move |socket| {
-        let span = tracing::info_span!("ws_connection", peer = %peer);
+        let span = info_span!("ws_connection", peer = %peer);
         async move {
             if let Err(e) = handle_websocket(socket, state).await {
                 error!("WebSocket handler error: {e}");
@@ -105,7 +105,7 @@ async fn handle_websocket(mut socket: WebSocket, state: Arc<AppState>) -> anyhow
                                     debug!(module = %module, event = %name, "→ subscribe");
                                 }
                                 Err(e) => {
-                                    error!("invalid message: {e} raw={line}");
+                                    error!(raw = %line, "invalid message: {e}");
                                 }
                             }
                         }
@@ -129,7 +129,10 @@ async fn handle_websocket(mut socket: WebSocket, state: Arc<AppState>) -> anyhow
                         socket.send(Message::Text(json.into())).await?;
                     }
                     Err(broadcast::error::RecvError::Closed) => break,
-                    Err(broadcast::error::RecvError::Lagged(_)) => continue,
+                    Err(broadcast::error::RecvError::Lagged(skipped)) => {
+                        warn!(skipped, "event receiver lagged, events dropped");
+                        continue;
+                    }
                 }
             }
         }
