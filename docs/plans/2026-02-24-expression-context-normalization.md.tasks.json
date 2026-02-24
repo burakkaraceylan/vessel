@@ -1,0 +1,8 @@
+{
+  "planPath": "docs/plans/2026-02-24-expression-context-normalization.md",
+  "tasks": [
+    {"id": 0, "subject": "Task 1: Add normalizeForExpression and wire it into expressions.ts", "status": "pending"},
+    {"id": 1, "subject": "Task 2: Update the HA expression in discord-dashboard.json", "status": "pending", "blockedBy": [0]}
+  ],
+  "lastUpdated": "2026-02-24"
+}
