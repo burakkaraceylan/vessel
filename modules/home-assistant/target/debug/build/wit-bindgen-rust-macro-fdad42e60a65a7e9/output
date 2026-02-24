@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=build.rs
+cargo:rustc-env=DEBUG_OUTPUT_DIR=C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\debug\build\wit-bindgen-rust-macro-fdad42e60a65a7e9\out

@@ -1,0 +1,1 @@
+C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\wasm32-wasip2\debug\home_assistant.wasm: C:\Users\Burak\CodeWin\vessel\modules\home-assistant\src\lib.rs C:\Users\Burak\CodeWin\vessel\modules\home-assistant\wit\vessel-host.wit

@@ -1,0 +1,14 @@
+C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\debug\deps\serde-90aeae8cccae0937.d: C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\debug\build\serde-560001541bc29762\out/private.rs
+
+C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\debug\deps\libserde-90aeae8cccae0937.rlib: C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\debug\build\serde-560001541bc29762\out/private.rs
+
+C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\debug\deps\libserde-90aeae8cccae0937.rmeta: C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\debug\build\serde-560001541bc29762\out/private.rs
+
+C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\lib.rs:
+C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\integer128.rs:
+C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\mod.rs:
+C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\de.rs:
+C:\Users\Burak\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\serde-1.0.228\src\private\ser.rs:
+C:\Users\Burak\CodeWin\vessel\modules\home-assistant\target\debug\build\serde-560001541bc29762\out/private.rs:
+
+# env-dep:OUT_DIR=C:\\Users\\Burak\\CodeWin\\vessel\\modules\\home-assistant\\target\\debug\\build\\serde-560001541bc29762\\out
