@@ -107,7 +107,7 @@ impl Guest for HomeAssistant {
             }
 
             "auth_invalid" => {
-                log("error", "Home Assistant: authentication failed — set token via storage");
+                log("error", "Home Assistant: authentication failed — check 'token' under [modules.home-assistant] in config.toml");
             }
 
             "event" => {

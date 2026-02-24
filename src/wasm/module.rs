@@ -160,14 +160,17 @@ impl Module for WasmModule {
 }
 
 fn toml_to_string_map(table: &toml::Table) -> std::collections::HashMap<String, String> {
-    table.iter().map(|(k, v)| {
+    table.iter().filter_map(|(k, v)| {
         let s = match v {
             toml::Value::String(s) => s.clone(),
             toml::Value::Integer(i) => i.to_string(),
             toml::Value::Float(f) => f.to_string(),
             toml::Value::Boolean(b) => b.to_string(),
-            other => other.to_string(),
+            other => {
+                eprintln!("[vessel] config key '{}' has unsupported type ({}), skipping", k, other.type_str());
+                return None;
+            }
         };
-        (k.clone(), s)
+        Some((k.clone(), s))
     }).collect()
 }
