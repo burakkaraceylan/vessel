@@ -98,16 +98,63 @@ impl vessel::host::host::Host for HostData {
         }
     }
 
-    async fn websocket_connect(&mut self, _url: String) -> Result<u32, String> {
-        Err("not yet implemented".into())
+    async fn websocket_connect(&mut self, url: String) -> Result<u32, String> {
+        if let Err(e) = self.capability.check_network_websocket() {
+            return Err(e.to_string());
+        }
+
+        use futures_util::StreamExt;
+        use tokio_tungstenite::connect_async;
+
+        let handle = self.next_handle;
+        self.next_handle += 1;
+
+        let (outbound_tx, mut outbound_rx) = tokio::sync::mpsc::channel::<String>(32);
+        let inbound_tx = self.ws_tx.clone();
+        let module_id = self.module_id.clone();
+
+        tokio::spawn(async move {
+            let ws_stream = match connect_async(&url).await {
+                Ok((stream, _)) => stream,
+                Err(e) => {
+                    eprintln!("[{}] WS connect failed: {}", module_id, e);
+                    return;
+                }
+            };
+            let (mut write, mut read) = ws_stream.split();
+
+            loop {
+                tokio::select! {
+                    Some(msg) = outbound_rx.recv() => {
+                        use tokio_tungstenite::tungstenite::Message;
+                        use futures_util::SinkExt;
+                        let _ = write.send(Message::text(msg)).await;
+                    }
+                    Some(Ok(msg)) = read.next() => {
+                        use tokio_tungstenite::tungstenite::Message;
+                        if let Message::Text(text) = msg {
+                            let _ = inbound_tx.send((handle, text.as_str().to_owned())).await;
+                        }
+                    }
+                    else => break,
+                }
+            }
+        });
+
+        self.ws_handles.insert(handle, outbound_tx);
+        Ok(handle)
     }
 
-    async fn websocket_send(&mut self, _handle: u32, _message: String) -> Result<(), String> {
-        Err("not yet implemented".into())
+    async fn websocket_send(&mut self, handle: u32, message: String) -> Result<(), String> {
+        match self.ws_handles.get(&handle) {
+            Some(tx) => tx.send(message).await.map_err(|e| e.to_string()),
+            None => Err(format!("unknown websocket handle {}", handle)),
+        }
     }
 
-    async fn websocket_close(&mut self, _handle: u32) -> Result<(), String> {
-        Err("not yet implemented".into())
+    async fn websocket_close(&mut self, handle: u32) -> Result<(), String> {
+        self.ws_handles.remove(&handle);
+        Ok(())
     }
 
     async fn storage_get(&mut self, key: String) -> Option<String> {
