@@ -12,6 +12,12 @@ function sanitizeKey(key: string): string {
 	return key.replace(/[-.]/g, "_");
 }
 
+// Normalizes moduleState keys for filtrex evaluation. Filtrex requires
+// valid JS identifiers, so hyphens and dots in module/event names are
+// replaced with underscores (e.g. "home-assistant" -> "home_assistant",
+// "light.phillips_hue" -> "light_phillips_hue"). Inner data fields are
+// untouched. Note: valueBinding lookups in WidgetShell bypass this function
+// and use raw wire-format keys directly against the Zustand store.
 function normalizeForExpression(
 	state: Record<string, Record<string, unknown>>,
 ): Record<string, Record<string, unknown>> {

@@ -42,6 +42,33 @@
 			}
 		},
 		{
+			"id": "office",
+			"type": "button",
+			"size": { "w": 1, "h": 1 },
+			"position": { "col": 4, "row": 0 },
+			"config": {
+				"backgroundColor": "black",
+				"image": "${if home_assistant.light_phillips_hue.state == \"on\" then \"/packs/hexaza/030-EMOJIS_light_bulb.jpg\" else \"/packs/hexaza/030-EMOJIS_light_bulb_off.jpg\"}",
+				"borderColor": "var(--border-color)",
+				"action": {
+					"module": "home-assistant",
+					"action": "call_service",
+					"params": {
+						"domain": "light",
+						"service": "toggle",
+						"service_data": {
+							"entity_id": "light.phillips_hue"
+						}
+					}
+				},
+				"valueBinding": {
+					"module": "home-assistant",
+					"event": "light.phillips_hue",
+					"key": "state"
+				}
+			}
+		},
+		{
 			"id": "media-previous",
 			"type": "button",
 			"size": { "w": 1, "h": 1 },
