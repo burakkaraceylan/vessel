@@ -20,13 +20,13 @@ impl IntoModuleEvent for DiscordEvent {
                 source: "discord",
                 event: "voice_settings_update".to_string(),
                 data: serde_json::to_value(settings).unwrap_or_default(),
-                cache_key: "discord/voice_settings_update".to_string(),
+                cache_key: "discord/voice_settings_update".to_owned(),
             },
             DiscordEvent::SelectedVoiceChannel(channel) => ModuleEvent::Stateful {
                 source: "discord",
                 event: "selected_voice_channel".to_string(),
                 data: channel.unwrap_or(Value::Null),
-                cache_key: "discord/selected_voice_channel".to_string(),
+                cache_key: "discord/selected_voice_channel".to_owned(),
             },
             // Transition events — canonical state is SelectedVoiceChannel.
             DiscordEvent::VoiceChannelJoined(data) => ModuleEvent::Transient {

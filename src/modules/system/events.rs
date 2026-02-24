@@ -14,7 +14,7 @@ impl IntoModuleEvent for SystemEvent {
                     "title": title,
                     "exe": exe
                 }),
-                cache_key: "system/window_focus_changed".to_string(),
+                cache_key: "system/window_focus_changed".to_owned(),
             },
         }
     }
