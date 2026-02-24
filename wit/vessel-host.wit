@@ -45,6 +45,9 @@ interface host {
     websocket-send: func(handle: u32, message: string) -> result<_, string>;
     websocket-close: func(handle: u32) -> result<_, string>;
 
+    // ── Config (read-only admin values from config.toml) ──────────────────
+    config-get: func(key: string) -> option<string>;
+
     // ── Storage (auto-namespaced by module id on the host side) ───────────
     storage-get: func(key: string) -> option<string>;
     storage-set: func(key: string, value: string) -> result<_, string>;
