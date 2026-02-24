@@ -55,12 +55,17 @@ impl vessel::host::host::Host for HostData {
 
     async fn call(
         &mut self,
-        _module: String,
-        _name: String,
-        _version: u32,
+        module: String,
+        name: String,
+        version: u32,
         _params: String,
     ) -> Result<String, String> {
-        Err("not yet implemented".into())
+        // Capability check runs even though routing is not yet implemented — this
+        // ensures the enforcement path is exercised and denials are returned correctly.
+        if let Err(e) = self.capability.check_call(&module, &name, version) {
+            return Err(e.to_string());
+        }
+        Err("driver call routing not yet implemented".into())
     }
 
     async fn send_http_request(
@@ -161,29 +166,42 @@ impl vessel::host::host::Host for HostData {
         if self.capability.check_storage().is_err() {
             return None;
         }
-        let path = self.storage_dir.join(sanitize_key(&key));
-        std::fs::read_to_string(path).ok()
+        let sanitized = sanitize_key(&key);
+        if sanitized.is_empty() {
+            return None;
+        }
+        let path = self.storage_dir.join(sanitized);
+        tokio::fs::read_to_string(path).await.ok()
     }
 
     async fn storage_set(&mut self, key: String, value: String) -> Result<(), String> {
         if let Err(e) = self.capability.check_storage() {
             return Err(e.to_string());
         }
-        let path = self.storage_dir.join(sanitize_key(&key));
-        std::fs::write(path, value).map_err(|e| e.to_string())
+        let sanitized = sanitize_key(&key);
+        if sanitized.is_empty() {
+            return Err("storage key must not be empty".into());
+        }
+        let path = self.storage_dir.join(sanitized);
+        tokio::fs::write(path, value).await.map_err(|e| e.to_string())
     }
 
     async fn storage_delete(&mut self, key: String) -> Result<(), String> {
         if let Err(e) = self.capability.check_storage() {
             return Err(e.to_string());
         }
-        let path = self.storage_dir.join(sanitize_key(&key));
-        let _ = std::fs::remove_file(path); // Ignore not-found
+        let sanitized = sanitize_key(&key);
+        if sanitized.is_empty() {
+            return Err("storage key must not be empty".into());
+        }
+        let path = self.storage_dir.join(sanitized);
+        let _ = tokio::fs::remove_file(path).await; // Ignore not-found
         Ok(())
     }
 
     async fn set_timeout(&mut self, ms: u64) -> u32 {
         if self.capability.check_timers().is_err() {
+            // Returns 0; guest should treat 0 as an invalid handle (timers not permitted).
             return 0;
         }
         let handle = self.next_handle;
@@ -199,6 +217,7 @@ impl vessel::host::host::Host for HostData {
 
     async fn set_interval(&mut self, ms: u64) -> u32 {
         if self.capability.check_timers().is_err() {
+            // Returns 0; guest should treat 0 as an invalid handle (timers not permitted).
             return 0;
         }
         let handle = self.next_handle;

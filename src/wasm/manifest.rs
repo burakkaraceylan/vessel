@@ -55,6 +55,8 @@ pub fn load_manifest(module_dir: &Path) -> anyhow::Result<ModuleManifest> {
         .with_context(|| format!("reading {}", wasm_path.display()))?;
 
     // Tamper detection: if a hash file exists, verify it.
+    // The hash is written at install time by `write_hash()`. Modules that have
+    // never been hashed (e.g. hand-placed dev modules) are loaded without verification.
     if hash_path.exists() {
         let stored_hash = std::fs::read_to_string(&hash_path)
             .context("reading manifest.hash")?;
