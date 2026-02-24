@@ -3,6 +3,7 @@ use crate::wasm::capability::CapabilityValidator;
 use glob::Pattern;
 use std::sync::Arc;
 use tokio::sync::mpsc;
+use tracing::{debug, error, info, warn};
 
 wasmtime::component::bindgen!({
     world: "vessel-module",
@@ -123,7 +124,7 @@ impl vessel::host::host::Host for HostData {
             let ws_stream = match connect_async(&url).await {
                 Ok((stream, _)) => stream,
                 Err(e) => {
-                    eprintln!("[{}] WS connect failed: {}", module_id, e);
+                    error!(module = %module_id, "WebSocket connect failed: {e}");
                     return;
                 }
             };
@@ -249,7 +250,14 @@ impl vessel::host::host::Host for HostData {
     }
 
     async fn log(&mut self, level: String, message: String) {
-        println!("[{}] [{}] {}", level.to_uppercase(), self.module_id, message);
+        let module = self.module_id.as_str();
+        match level.as_str() {
+            "error" => error!(target: "wasm", module, "{message}"),
+            "warn"  => warn!(target: "wasm", module, "{message}"),
+            "info"  => info!(target: "wasm", module, "{message}"),
+            "debug" => debug!(target: "wasm", module, "{message}"),
+            _       => tracing::trace!(target: "wasm", module, "{message}"),
+        }
     }
 }
 
