@@ -31,8 +31,11 @@ interface host {
     // ── Event bus ──────────────────────────────────────────────────────────
     /// Subscribe to events matching `pattern` (glob: "discord.voice.*").
     subscribe: func(pattern: string) -> result<_, string>;
-    /// Emit a new event onto the Vessel event bus.
+    /// Emit a transient (uncached) event. Not replayed to new clients.
     emit: func(event: event) -> result<_, string>;
+    /// Emit a stateful (cached) event. `cache-key` determines the cache slot —
+    /// same key overwrites. New clients receive this in their snapshot on connect.
+    emit-stateful: func(event: event, cache-key: string) -> result<_, string>;
 
     // ── Driver calls ───────────────────────────────────────────────────────
     /// Route a command to a native module. `params` is a JSON string. Returns JSON string.
