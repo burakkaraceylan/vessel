@@ -183,7 +183,7 @@ impl Module for DiscordModule {
                                             source: "discord",
                                             event: "speaking".to_string(),
                                             data: serde_json::json!({ "active": active }),
-                                            cache_key: "discord/speaking",
+                                            cache_key: "discord/speaking".to_string(),
                                         });
                                     }
                                 }
@@ -196,7 +196,7 @@ impl Module for DiscordModule {
                                             source: "discord",
                                             event: "speaking".to_string(),
                                             data: serde_json::json!({ "active": active }),
-                                            cache_key: "discord/speaking",
+                                            cache_key: "discord/speaking".to_string(),
                                         });
                                     }
                                 }
@@ -207,7 +207,7 @@ impl Module for DiscordModule {
                                         source: "discord",
                                         event: "speaking".to_string(),
                                         data: serde_json::json!({ "active": false }),
-                                        cache_key: "discord/speaking",
+                                        cache_key: "discord/speaking".to_string(),
                                     });
                                     // Re-subscribe to speaking for the new channel (None = left channel).
                                     if let Some(channel_id) = event.data()["channel_id"].as_str() {

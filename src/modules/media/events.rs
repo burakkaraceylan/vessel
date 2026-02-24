@@ -34,13 +34,13 @@ impl IntoModuleEvent for MediaEvent {
                     "cover_art_url": track.cover_art_key.as_deref()
                         .map(|k| format!("/api/assets/{k}")),
                 }),
-                cache_key: "media/now_playing",
+                cache_key: "media/now_playing".to_string(),
             },
             MediaEvent::PlaybackStopped => ModuleEvent::Stateful {
                 source: "media",
                 event: "playback_stopped".to_string(),
                 data: serde_json::Value::Null,
-                cache_key: "media/now_playing",
+                cache_key: "media/now_playing".to_string(),
             },
         }
     }

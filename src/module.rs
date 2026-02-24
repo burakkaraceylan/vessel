@@ -63,7 +63,7 @@ pub enum ModuleEvent {
         source: &'static str,
         event: String,
         data: serde_json::Value,
-        cache_key: &'static str,
+        cache_key: String,
     },
     /// Not persisted. Use for point-in-time notifications that have no lasting state.
     Transient {
@@ -76,19 +76,19 @@ pub enum ModuleEvent {
 impl ModuleEvent {
     pub fn source(&self) -> &'static str {
         match self {
-            Self::Stateful  { source, .. } | Self::Transient { source, .. } => source,
+            Self::Stateful { source, .. } | Self::Transient { source, .. } => source,
         }
     }
 
     pub fn event_name(&self) -> &str {
         match self {
-            Self::Stateful  { event, .. } | Self::Transient { event, .. } => event,
+            Self::Stateful { event, .. } | Self::Transient { event, .. } => event,
         }
     }
 
     pub fn data(&self) -> &serde_json::Value {
         match self {
-            Self::Stateful  { data, .. } | Self::Transient { data, .. } => data,
+            Self::Stateful { data, .. } | Self::Transient { data, .. } => data,
         }
     }
 }
@@ -101,7 +101,7 @@ pub struct EventPublisher {
 
 impl EventPublisher {
     pub fn new() -> Self {
-        let (tx, _) = broadcast::channel(32);
+        let (tx, _) = broadcast::channel(1024);
         Self {
             tx,
             cache: Arc::new(DashMap::new()),
@@ -110,7 +110,7 @@ impl EventPublisher {
 
     pub fn send(&self, event: ModuleEvent) {
         if let ModuleEvent::Stateful { cache_key, .. } = &event {
-            self.cache.insert(cache_key.to_string(), event.clone());
+            self.cache.insert(cache_key.clone(), event.clone());
         }
         let _ = self.tx.send(event);
     }
