@@ -1,0 +1,11 @@
+{
+  "planPath": "docs/plans/2026-02-24-wasm-module-config.md",
+  "tasks": [
+    {"id": 0, "subject": "Task 1: Add config-get to both WIT files", "status": "pending"},
+    {"id": 1, "subject": "Task 2: Implement config_get on the host", "status": "pending", "blockedBy": [0]},
+    {"id": 2, "subject": "Task 3: Thread config through WasmModule", "status": "pending", "blockedBy": [1]},
+    {"id": 3, "subject": "Task 4: Update the home-assistant WASM module", "status": "pending", "blockedBy": [2]},
+    {"id": 4, "subject": "Task 5: Add example config to config.toml", "status": "pending", "blockedBy": [3]}
+  ],
+  "lastUpdated": "2026-02-24T00:00:00Z"
+}
