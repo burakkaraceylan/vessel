@@ -117,6 +117,11 @@ impl Guest for HomeAssistant {
                 // Fetch all current entity states for the snapshot cache.
                 let states_id = next_id();
                 GET_STATES_ID.store(states_id, Ordering::Relaxed);
+                // NOTE: get_states and subscribe_events are sent in order. HA processes
+                // commands sequentially per connection, so the snapshot result arrives
+                // before any state_changed events from the subscription. A stricter
+                // approach would subscribe first, buffer events, then apply get_states —
+                // but sequential ordering is reliable for normal HA deployments.
                 let get_states = serde_json::json!({
                     "id": states_id,
                     "type": "get_states"
@@ -138,7 +143,10 @@ impl Guest for HomeAssistant {
             }
 
             "result" => {
-                let msg_id = msg.get("id").and_then(|v| v.as_u64()).unwrap_or(0) as u32;
+                let msg_id = msg.get("id")
+                    .and_then(|v| v.as_u64())
+                    .and_then(|v| u32::try_from(v).ok())
+                    .unwrap_or(0);
                 if msg_id != GET_STATES_ID.load(Ordering::Relaxed) {
                     return Ok(());
                 }
@@ -151,8 +159,12 @@ impl Guest for HomeAssistant {
                     None => return Ok(()),
                 };
                 for state in &states {
-                    let _ = emit_entity_state(state);
+                    if let Err(e) = emit_entity_state(state) {
+                        log("warn", &format!("emit_entity_state failed: {e}"));
+                    }
                 }
+                // Mark as consumed so future result messages don't incorrectly match.
+                GET_STATES_ID.store(0, Ordering::Relaxed);
             }
 
             "event" => {
