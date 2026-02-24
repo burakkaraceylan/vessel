@@ -4,3 +4,7 @@ port = 8080
 [modules.discord]
 client_id = "1471623206942146844"
 client_secret = "pH0cd2Isv2UswQv9BX5GxnEdSdYEdw5T"
+
+[modules.home-assistant]
+url = "ws://homeassistant.local:8123/api/websocket"
+token = "your-long-lived-access-token-here"
