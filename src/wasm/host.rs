@@ -9,6 +9,7 @@ wasmtime::component::bindgen!({
     world: "vessel-module",
     path: "wit/vessel-host.wit",
     imports: { default: async },
+    exports: { default: async },
 });
 
 pub struct HostData {
@@ -51,6 +52,22 @@ impl vessel::host::host::Host for HostData {
             source: self.module_id_static,
             event: event.name,
             data,
+        });
+        Ok(())
+    }
+
+    async fn emit_stateful(
+        &mut self,
+        event: vessel::host::types::Event,
+        cache_key: String,
+    ) -> Result<(), String> {
+        let data: serde_json::Value = serde_json::from_str(&event.data)
+            .unwrap_or(serde_json::Value::Null);
+        self.event_publisher.send(ModuleEvent::Stateful {
+            source: self.module_id_static,
+            event: event.name,
+            data,
+            cache_key,
         });
         Ok(())
     }
