@@ -15,6 +15,7 @@ use crate::module_manager::ModuleManager;
 use crate::modules::{discord, media};
 use crate::vessel::{AppState, build_router};
 use crate::wasm::WasmModule;
+use std::net::SocketAddr;
 use tokio_util::sync::CancellationToken;
 use tracing::{error, info, warn};
 
@@ -111,7 +112,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let listener =
         tokio::net::TcpListener::bind(format!("{}:{}", config.host, config.port)).await?;
     info!(host = %config.host, port = config.port, "server listening");
-    use std::net::SocketAddr;
     axum::serve(listener, build_router(state).into_make_service_with_connect_info::<SocketAddr>())
         .with_graceful_shutdown(token.cancelled_owned())
         .await?;
