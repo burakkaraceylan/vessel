@@ -22,6 +22,7 @@ pub struct HostData {
     /// Pre-compiled glob patterns from `subscribe()` calls — avoids recompiling on every event.
     pub subscriptions: Vec<Pattern>,
     pub storage_dir: std::path::PathBuf,
+    pub config: std::collections::HashMap<String, String>,
     pub timer_handles: std::collections::HashMap<u32, tokio::task::JoinHandle<()>>,
     pub ws_handles: std::collections::HashMap<u32, tokio::sync::mpsc::Sender<String>>,
     pub next_handle: u32,
@@ -160,6 +161,10 @@ impl vessel::host::host::Host for HostData {
     async fn websocket_close(&mut self, handle: u32) -> Result<(), String> {
         self.ws_handles.remove(&handle);
         Ok(())
+    }
+
+    async fn config_get(&mut self, key: String) -> Option<String> {
+        self.config.get(&key).cloned()
     }
 
     async fn storage_get(&mut self, key: String) -> Option<String> {
