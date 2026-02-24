@@ -17,7 +17,7 @@ use crate::vessel::{AppState, build_router};
 use crate::wasm::WasmModule;
 use tokio_util::sync::CancellationToken;
 
-fn load_wasm_modules(manager: &mut ModuleManager) {
+fn load_wasm_modules(manager: &mut ModuleManager, config: &config::Config) {
     let modules_dir = dirs::data_local_dir()
         .unwrap_or_else(|| std::path::PathBuf::from("."))
         .join("vessel")
@@ -32,7 +32,14 @@ fn load_wasm_modules(manager: &mut ModuleManager) {
         if !path.is_dir() || !path.join("module.wasm").exists() {
             continue;
         }
-        match WasmModule::load(path.clone()) {
+        let dir_name = path.file_name()
+            .and_then(|n| n.to_str())
+            .unwrap_or("");
+        let module_config = config.modules
+            .get(dir_name)
+            .cloned()
+            .unwrap_or_default();
+        match WasmModule::load(path.clone(), module_config) {
             Ok(module) => {
                 println!("[vessel] loaded WASM module: {}", module.name());
                 manager.register_module(Box::new(module));
@@ -74,7 +81,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => { eprintln!("[vessel] system module failed to initialize: {e:#}"); }
     }
 
-    load_wasm_modules(&mut module_manager);
+    load_wasm_modules(&mut module_manager, &config);
 
     module_manager.run_all(token.clone()).await?;
 

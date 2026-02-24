@@ -16,20 +16,23 @@ pub struct WasmModule {
     engine: Engine,
     /// Leaked once at load time — reused by both `name()` and `run()`.
     name_static: &'static str,
+    config: std::collections::HashMap<String, String>,
 }
 
 impl WasmModule {
-    pub fn load(module_dir: PathBuf) -> anyhow::Result<Self> {
+    pub fn load(module_dir: PathBuf, config: toml::Table) -> anyhow::Result<Self> {
         let manifest = load_manifest(&module_dir)?;
         let wasm_path = module_dir.join("module.wasm");
         let name_static: &'static str = Box::leak(manifest.id.clone().into_boxed_str());
 
-        let mut config = Config::new();
-        config.async_support(true);
-        config.wasm_component_model(true);
-        let engine = Engine::new(&config)?;
+        let mut wasmtime_config = Config::new();
+        wasmtime_config.async_support(true);
+        wasmtime_config.wasm_component_model(true);
+        let engine = Engine::new(&wasmtime_config)?;
 
-        Ok(WasmModule { manifest, wasm_path, engine, name_static })
+        let config_map = toml_to_string_map(&config);
+
+        Ok(WasmModule { manifest, wasm_path, engine, name_static, config: config_map })
     }
 }
 
@@ -71,6 +74,7 @@ impl Module for WasmModule {
             ws_tx,
             subscriptions: Vec::new(),
             storage_dir,
+            config: self.config.clone(),
             timer_handles: std::collections::HashMap::new(),
             ws_handles: std::collections::HashMap::new(),
             next_handle: 1,
@@ -153,4 +157,17 @@ impl Module for WasmModule {
         let _ = bindings.vessel_host_guest().call_on_unload(&mut store);
         Ok(())
     }
+}
+
+fn toml_to_string_map(table: &toml::Table) -> std::collections::HashMap<String, String> {
+    table.iter().map(|(k, v)| {
+        let s = match v {
+            toml::Value::String(s) => s.clone(),
+            toml::Value::Integer(i) => i.to_string(),
+            toml::Value::Float(f) => f.to_string(),
+            toml::Value::Boolean(b) => b.to_string(),
+            other => other.to_string(),
+        };
+        (k.clone(), s)
+    }).collect()
 }
