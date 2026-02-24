@@ -26,7 +26,7 @@ impl Guest for HomeAssistant {
     fn on_load() -> Result<(), String> {
         log("info", "Home Assistant: loading");
 
-        let ha_url = storage_get("url")
+        let ha_url = config_get("url")
             .unwrap_or_else(|| "ws://homeassistant.local:8123/api/websocket".to_string());
 
         // Subscribe to system window events (optional — could pause when idle)
@@ -73,7 +73,7 @@ impl Guest for HomeAssistant {
     fn on_timer(_handle: u32) -> Result<(), String> {
         // Reconnect timer
         log("info", "Home Assistant: attempting reconnect");
-        let ha_url = storage_get("url")
+        let ha_url = config_get("url")
             .unwrap_or_else(|| "ws://homeassistant.local:8123/api/websocket".to_string());
         if let Ok(new_handle) = websocket_connect(&ha_url) {
             WS_HANDLE.store(new_handle, Ordering::Relaxed);
@@ -90,7 +90,7 @@ impl Guest for HomeAssistant {
 
         match msg.get("type").and_then(|t| t.as_str()).unwrap_or("") {
             "auth_required" => {
-                let token = storage_get("token").unwrap_or_default();
+                let token = config_get("token").unwrap_or_default();
                 let auth = serde_json::json!({ "type": "auth", "access_token": token });
                 websocket_send(WS_HANDLE.load(Ordering::Relaxed), &auth.to_string())?;
             }
