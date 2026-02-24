@@ -14,7 +14,35 @@ use crate::module::Module;
 use crate::module_manager::ModuleManager;
 use crate::modules::{discord, media};
 use crate::vessel::{AppState, build_router};
+use crate::wasm::WasmModule;
 use tokio_util::sync::CancellationToken;
+
+fn load_wasm_modules(manager: &mut ModuleManager) {
+    let modules_dir = dirs::data_local_dir()
+        .unwrap_or_else(|| std::path::PathBuf::from("."))
+        .join("vessel")
+        .join("modules");
+
+    let Ok(entries) = std::fs::read_dir(&modules_dir) else {
+        return; // No modules directory yet — fine
+    };
+
+    for entry in entries.flatten() {
+        let path = entry.path();
+        if !path.is_dir() || !path.join("module.wasm").exists() {
+            continue;
+        }
+        match WasmModule::load(path.clone()) {
+            Ok(module) => {
+                println!("[vessel] loaded WASM module: {}", module.name());
+                manager.register_module(Box::new(module));
+            }
+            Err(e) => {
+                eprintln!("[vessel] failed to load WASM module at {}: {}", path.display(), e);
+            }
+        }
+    }
+}
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -45,6 +73,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(m) => { module_manager.register_module(Box::new(m)); }
         Err(e) => { eprintln!("[vessel] system module failed to initialize: {e:#}"); }
     }
+
+    load_wasm_modules(&mut module_manager);
 
     module_manager.run_all(token.clone()).await?;
 
