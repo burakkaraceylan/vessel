@@ -4,6 +4,7 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use tokio::sync::mpsc;
 use tokio_util::sync::CancellationToken;
+use tracing::{error, info, info_span, warn, Instrument};
 
 pub struct ModuleManager {
     senders: HashMap<&'static str, mpsc::Sender<ModuleCommand>>,
@@ -27,6 +28,7 @@ impl ModuleManager {
         let name = module.name();
         self.senders.insert(name, tx);
         self.modules.insert(name, (module, rx));
+        info!(name, "module registered");
     }
 
     pub async fn send_command(
@@ -36,7 +38,7 @@ impl ModuleManager {
         if let Some(tx) = self.senders.get(command.target.as_str()) {
             tx.send(command).await
         } else {
-            eprintln!("Module '{}' not found", command.target);
+            warn!(name = %command.target, "module not found");
             Ok(())
         }
     }
@@ -66,17 +68,21 @@ impl ModuleManager {
 
     pub async fn run_all(&mut self, cancel_token: CancellationToken) -> anyhow::Result<()> {
         for (_, (module, rx)) in self.modules.drain() {
+            let name = module.name();
             let ctx = ModuleContext::new(
                 cancel_token.clone(),
                 rx,
                 self.event_publisher.clone(),
                 self.assets.clone(),
             );
-            tokio::spawn(async move {
-                if let Err(e) = module.run(ctx).await {
-                    eprintln!("Module error: {}", e);
+            tokio::spawn(
+                async move {
+                    if let Err(e) = module.run(ctx).await {
+                        error!("module error: {e:#}");
+                    }
                 }
-            });
+                .instrument(info_span!("module", name)),
+            );
         }
         Ok(())
     }
