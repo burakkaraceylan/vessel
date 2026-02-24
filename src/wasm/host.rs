@@ -62,7 +62,10 @@ impl vessel::host::host::Host for HostData {
         cache_key: String,
     ) -> Result<(), String> {
         let data: serde_json::Value = serde_json::from_str(&event.data)
-            .unwrap_or(serde_json::Value::Null);
+            .unwrap_or_else(|e| {
+                warn!(module = self.module_id.as_str(), "emit_stateful: invalid JSON in event.data: {e}");
+                serde_json::Value::Null
+            });
         self.event_publisher.send(ModuleEvent::Stateful {
             source: self.module_id_static,
             event: event.name,

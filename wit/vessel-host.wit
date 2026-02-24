@@ -33,7 +33,7 @@ interface host {
     subscribe: func(pattern: string) -> result<_, string>;
     /// Emit a transient (uncached) event. Not replayed to new clients.
     emit: func(event: event) -> result<_, string>;
-    /// Emit a stateful (cached) event. `cache-key` determines the DashMap slot --
+    /// Emit a stateful (cached) event. `cache-key` determines the cache slot —
     /// same key overwrites. New clients receive this in their snapshot on connect.
     emit-stateful: func(event: event, cache-key: string) -> result<_, string>;
 
