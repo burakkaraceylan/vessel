@@ -8,16 +8,17 @@ mod protocol;
 mod vessel;
 mod wasm;
 
+use std::net::SocketAddr;
 use std::sync::Arc;
+
+use tokio_util::sync::CancellationToken;
+use tracing::{error, info, warn};
 
 use crate::module::Module;
 use crate::module_manager::ModuleManager;
 use crate::modules::{discord, media};
 use crate::vessel::{AppState, build_router};
 use crate::wasm::WasmModule;
-use std::net::SocketAddr;
-use tokio_util::sync::CancellationToken;
-use tracing::{error, info, warn};
 
 fn load_wasm_modules(manager: &mut ModuleManager, config: &config::Config) {
     let modules_dir = dirs::data_local_dir()
