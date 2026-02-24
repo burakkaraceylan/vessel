@@ -16,6 +16,7 @@ use crate::modules::{discord, media};
 use crate::vessel::{AppState, build_router};
 use crate::wasm::WasmModule;
 use tokio_util::sync::CancellationToken;
+use tracing::{error, info, warn};
 
 fn load_wasm_modules(manager: &mut ModuleManager, config: &config::Config) {
     let modules_dir = dirs::data_local_dir()
@@ -41,11 +42,11 @@ fn load_wasm_modules(manager: &mut ModuleManager, config: &config::Config) {
             .unwrap_or_default();
         match WasmModule::load(path.clone(), module_config) {
             Ok(module) => {
-                println!("[vessel] loaded WASM module: {}", module.name());
+                info!(name = module.name(), "WASM module loaded");
                 manager.register_module(Box::new(module));
             }
             Err(e) => {
-                eprintln!("[vessel] failed to load WASM module at {}: {}", path.display(), e);
+                error!(path = %path.display(), "failed to load WASM module: {e:#}");
             }
         }
     }
@@ -53,6 +54,13 @@ fn load_wasm_modules(manager: &mut ModuleManager, config: &config::Config) {
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            tracing_subscriber::EnvFilter::try_from_default_env()
+                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
+        )
+        .init();
+
     let token = CancellationToken::new();
     let config = config::Config::load()?;
 
@@ -65,20 +73,20 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Some(discord_config) => {
             match discord::DiscordModule::new(discord_config.to_owned()).await {
                 Ok(m) => { module_manager.register_module(Box::new(m)); }
-                Err(e) => { eprintln!("[vessel] discord module failed to initialize: {e:#}"); }
+                Err(e) => { error!("discord module failed to initialize: {e:#}"); }
             }
         }
-        None => eprintln!("[vessel] discord module config missing, skipping"),
+        None => warn!("discord module config missing, skipping"),
     }
 
     match media::MediaModule::new(toml::Table::new()).await {
         Ok(m) => { module_manager.register_module(Box::new(m)); }
-        Err(e) => { eprintln!("[vessel] media module failed to initialize: {e:#}"); }
+        Err(e) => { error!("media module failed to initialize: {e:#}"); }
     }
 
     match modules::system::SystemModule::new(toml::Table::new()).await {
         Ok(m) => { module_manager.register_module(Box::new(m)); }
-        Err(e) => { eprintln!("[vessel] system module failed to initialize: {e:#}"); }
+        Err(e) => { error!("system module failed to initialize: {e:#}"); }
     }
 
     load_wasm_modules(&mut module_manager, &config);
@@ -96,13 +104,15 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let cancel_token = token.clone();
     tokio::spawn(async move {
         tokio::signal::ctrl_c().await.unwrap();
-        println!("Ctrl+C received, shutting down...");
+        info!("Ctrl+C received, shutting down");
         cancel_token.cancel();
     });
 
     let listener =
         tokio::net::TcpListener::bind(format!("{}:{}", config.host, config.port)).await?;
-    axum::serve(listener, build_router(state))
+    info!(host = %config.host, port = config.port, "server listening");
+    use std::net::SocketAddr;
+    axum::serve(listener, build_router(state).into_make_service_with_connect_info::<SocketAddr>())
         .with_graceful_shutdown(token.cancelled_owned())
         .await?;
 
