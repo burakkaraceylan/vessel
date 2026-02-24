@@ -1,0 +1,16 @@
+{
+  "id": "home-assistant",
+  "name": "Home Assistant",
+  "version": "0.1.0",
+  "api_version": 1,
+  "description": "Bridges Vessel to Home Assistant via its WebSocket API. Subscribes to state_changed events and exposes call_service actions.",
+  "author": "",
+  "permissions": {
+    "network": {
+      "websocket": true
+    },
+    "subscribe": ["system.window.*"],
+    "storage": false,
+    "timers": false
+  }
+}
